@@ -111,6 +111,7 @@ export interface EpisodeCarouselProps {
 export interface DetailsBodyProps {
   data: DetailsContent;
   onPlayClick: () => void;
+  onShuffleAllClick?: () => void;
   onShareClick: () => void;
   showProgress: ShowProgressResult | null;
   voteAverage?: number;

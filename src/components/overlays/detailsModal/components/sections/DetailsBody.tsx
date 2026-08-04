@@ -17,6 +17,7 @@ import { DetailsBodyProps } from "../../types";
 export function DetailsBody({
   data,
   onPlayClick,
+  onShuffleAllClick,
   onShareClick,
   showProgress,
   voteAverage,
@@ -231,6 +232,25 @@ export function DetailsBody({
                     : t("details.play")}
             </span>
           </Button>
+          {data.type === "show" && onShuffleAllClick && (
+            <Button
+              onClick={onShuffleAllClick}
+              theme="secondary"
+              className={classNames(
+                "flex-1 sm:flex-initial sm:w-auto",
+                "gap-2 h-12 rounded-lg px-4 py-2 my-1 transition-transform hover:scale-105 duration-100",
+                "text-md text-white flex items-center justify-center",
+              )}
+            >
+              <Icon
+                icon={Icons.SHUFFLE}
+                className="text-white flex items-center justify-center"
+              />
+              <span className="text-white text-sm pr-1">
+                {t("details.shuffleAll")}
+              </span>
+            </Button>
+          )}
           <div className="flex items-center gap-1 flex-shrink-0">
             <MediaRatingCapsule
               media={{
