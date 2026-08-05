@@ -146,6 +146,13 @@ function VideoElement() {
     const existingCtx: AudioContext | undefined = (video as any).__audioCtx;
     const existingGain: GainNode | undefined = (video as any).__gainNode;
 
+   // nice j ob
+    if (volumeBoost <= 100) {
+      if (existingGain) existingGain.gain.value = 1;
+      video.removeAttribute("data-boosted");
+      return;
+    }
+
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioCtx) return;
 
@@ -183,8 +190,7 @@ function VideoElement() {
     if (ctx.state === "suspended") ctx.resume().catch(() => {});
 
     if (gainNode) gainNode.gain.value = Math.max(1, volumeBoost / 100);
-    if (volumeBoost > 100) video.setAttribute("data-boosted", "true");
-    else video.removeAttribute("data-boosted");
+    video.setAttribute("data-boosted", "true");
   }, [volumeBoost]);
   const trackObjectUrl = useObjectUrl(
     () => (srtData ? convertSubtitlesToObjectUrl(srtData) : null),
