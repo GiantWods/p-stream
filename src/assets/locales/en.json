@@ -18,6 +18,13 @@
     "visit": "Visit",
     "dismiss": "Dismiss"
   },
+  "appsNotice": {
+    "title": "Check out our apps",
+    "badge": "New",
+    "description": "Windows & Android apps for downloading your favorites, with far better sources and full 4K support.",
+    "visit": "Get the app",
+    "dismiss": "Dismiss"
+  },
   "about": {
     "description": "Z-Stream is a fork of movie-web that is ensured to stay up even after the shutdown of movie-web.app. Z-Stream runs on a private, self-hosted VPS. I run this site at a loss; there are very minimal ads due to my beliefs in free media.",
     "help": "Can't find an answer? <0>Get support here.</0>",
