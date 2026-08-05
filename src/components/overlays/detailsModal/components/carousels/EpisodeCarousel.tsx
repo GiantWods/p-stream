@@ -454,14 +454,10 @@ export function EpisodeCarousel({
             <button
               type="button"
               onClick={handleShuffleSeason}
-              className="flex items-center gap-1.5 pl-3 pr-3 py-1.5 bg-dropdown-background hover:bg-dropdown-hoverBackground transition-colors rounded-full text-sm text-white"
+              className="p-1.5 bg-dropdown-background hover:bg-dropdown-hoverBackground transition-colors rounded-full"
               title={t("details.shuffleSeason")}
             >
-              <Icon
-                icon={Icons.SHUFFLE}
-                className="h-5 w-5 text-white flex items-center justify-center"
-              />
-              <span>{t("details.shuffleSeason")}</span>
+              <Icon icon={Icons.SHUFFLE} className="h-5 w-5 text-white" />
             </button>
           )}
 

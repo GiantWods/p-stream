@@ -233,23 +233,17 @@ export function DetailsBody({
             </span>
           </Button>
           {data.type === "show" && onShuffleAllClick && (
-            <Button
+            <button
+              type="button"
               onClick={onShuffleAllClick}
-              theme="secondary"
-              className={classNames(
-                "flex-1 sm:flex-initial sm:w-auto",
-                "gap-2 h-12 rounded-lg px-4 py-2 my-1 transition-transform hover:scale-105 duration-100",
-                "text-md text-white flex items-center justify-center",
-              )}
+              title={t("details.shuffleAll")}
+              className="p-2 opacity-75 transition-opacity duration-300 hover:scale-110 hover:cursor-pointer hover:opacity-95"
             >
-              <Icon
+              <IconPatch
                 icon={Icons.SHUFFLE}
-                className="text-white flex items-center justify-center"
+                className="transition-transform duration-300 hover:scale-110 hover:cursor-pointer"
               />
-              <span className="text-white text-sm pr-1">
-                {t("details.shuffleAll")}
-              </span>
-            </Button>
+            </button>
           )}
           <div className="flex items-center gap-1 flex-shrink-0">
             <MediaRatingCapsule
