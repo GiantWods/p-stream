@@ -1,3 +1,4 @@
+import * as dashjs from "dashjs";
 import fscreen from "fscreen";
 import Hls, { Level } from "hls.js";
 
@@ -51,21 +52,25 @@ const qualityThresholds = [
   { minHeight: 0, quality: "360" as SourceQuality },
 ];
 
-function hlsLevelToQuality(level?: Level): SourceQuality | null {
-  if (!level?.height) return null;
+function heightToQuality(height?: number): SourceQuality | null {
+  if (!height) return null;
 
   // First check for exact matches
-  const exactMatch = levelConversionMap[level.height];
+  const exactMatch = levelConversionMap[height];
   if (exactMatch) return exactMatch;
 
   // For non-standard resolutions, map to closest standard quality
   for (const threshold of qualityThresholds) {
-    if (level.height >= threshold.minHeight) {
+    if (height >= threshold.minHeight) {
       return threshold.quality;
     }
   }
 
   return "unknown"; // fallback to unknown quality
+}
+
+function hlsLevelToQuality(level?: Level): SourceQuality | null {
+  return heightToQuality(level?.height);
 }
 
 function hlsLevelsToQualities(levels: Level[]): SourceQuality[] {
@@ -84,6 +89,7 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
   const { emit, on, off } = makeEmitter<DisplayInterfaceEvents>();
   let source: LoadableSource | null = null;
   let hls: Hls | null = null;
+  let dash: dashjs.MediaPlayerClass | null = null;
   let videoElement: HTMLVideoElement | null = null;
   let containerElement: HTMLElement | null = null;
   let isFullscreen = false;
@@ -194,8 +200,57 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
 
   }
 
+  // dashjs's public getBitrateInfoListFor/setQualityFor/getQualityFor exist
+  // at runtime (documented dash.js API since v3) but aren't declared in the
+  // npm package's index.d.ts, so these go through an `any` cast.
+  function dashBitrateList(): dashjs.BitrateInfo[] {
+    if (!dash) return [];
+    return (dash as any).getBitrateInfoListFor("video") ?? [];
+  }
+
+  function reportLevelsForDash() {
+    if (!dash) return;
+    const qualities = dashBitrateList()
+      .map((b) => heightToQuality(b.height))
+      .filter((v): v is SourceQuality => !!v);
+    emit("qualities", qualities);
+  }
+
+  function setupQualityForDash() {
+    if (!dash) return;
+    (dash as any).updateSettings({
+      streaming: { abr: { autoSwitchBitrate: { video: automaticQuality } } },
+    });
+    if (automaticQuality) return;
+
+    const bitrates = dashBitrateList();
+    const qualities = bitrates
+      .map((b) => heightToQuality(b.height))
+      .filter((v): v is SourceQuality => !!v);
+    const availableQuality = getPreferredQuality(qualities, {
+      lastChosenQuality: preferenceQuality,
+      automaticQuality,
+    });
+    if (!availableQuality) return;
+
+    // Highest bitrate rung matching the chosen quality bucket.
+    let bestIndex = -1;
+    let bestBitrate = -1;
+    bitrates.forEach((b, i) => {
+      if (
+        heightToQuality(b.height) === availableQuality &&
+        b.bitrate > bestBitrate
+      ) {
+        bestIndex = i;
+        bestBitrate = b.bitrate;
+      }
+    });
+    if (bestIndex !== -1) (dash as any).setQualityFor("video", bestIndex);
+  }
+
   function setupSource(vid: HTMLVideoElement, src: LoadableSource) {
     hls = null;
+    dash = null;
     if (src.type === "hls") {
       if (canPlayHlsNatively(vid)) {
         vid.src = processCdnLink(src.url);
@@ -361,6 +416,49 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
 
       hls.attachMedia(vid);
       hls.loadSource(processCdnLink(src.url));
+      vid.currentTime = startAt;
+      return;
+    }
+
+    if (src.type === "dash") {
+      dash = dashjs.MediaPlayer().create();
+      const extraHeaders = { ...src.preferredHeaders, ...src.headers };
+      if (Object.keys(extraHeaders).length > 0) {
+        // RequestInterceptor's type comes from @svta/cml-request, which
+        // dashjs doesn't re-export cleanly for a plain header patch -- `any`
+        // keeps this from fighting that package's exact request shape.
+        dash.addRequestInterceptor(async (request: any) => {
+          request.headers = { ...request.headers, ...extraHeaders };
+          return request;
+        });
+      }
+      dash.on(dashjs.MediaPlayer.events.ERROR, (data: any) => {
+        console.error("DASH error", data);
+        emit("error", {
+          message: data?.error?.message ?? String(data?.error ?? "dash error"),
+          errorName: data?.error?.code
+            ? `dash-${data.error.code}`
+            : "DashError",
+          type: "global",
+        });
+      });
+      dash.on(dashjs.MediaPlayer.events.STREAM_INITIALIZED, () => {
+        reportLevelsForDash();
+        setupQualityForDash();
+      });
+      dash.on(dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED, (data: any) => {
+        if (qualityChangeTimeout) return;
+        if (data?.mediaType !== "video") return;
+        const bitrates = dashBitrateList();
+        const level = bitrates[data.newQuality];
+        const currentQuality = heightToQuality(level?.height);
+        emit(
+          "changedquality",
+          automaticQuality ? currentQuality : preferenceQuality,
+        );
+      });
+
+      dash.initialize(vid, processCdnLink(src.url), false);
       vid.currentTime = startAt;
       return;
     }
@@ -664,6 +762,10 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
       hls.destroy();
       hls = null;
     }
+    if (dash) {
+      dash.destroy();
+      dash = null;
+    }
     // Reset the last valid duration and time when unloading source
     lastValidDuration = 0;
     lastValidTime = 0;
@@ -757,7 +859,7 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
       setSource();
     },
     changeQuality(newAutomaticQuality, newPreferredQuality) {
-      if (source?.type !== "hls") return;
+      if (source?.type !== "hls" && source?.type !== "dash") return;
 
       // Clear any pending quality change to prevent race conditions
       if (qualityChangeTimeout) {
@@ -770,7 +872,8 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
 
       // Debounce quality changes to prevent rapid switching issues
       qualityChangeTimeout = setTimeout(() => {
-        setupQualityForHls();
+        if (source?.type === "dash") setupQualityForDash();
+        else setupQualityForHls();
         qualityChangeTimeout = null;
       }, 100); // 100ms debounce delay
     },

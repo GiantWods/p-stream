@@ -327,7 +327,7 @@ export const createSourceSlice: MakeSlice<SourceSlice> = (set, get) => ({
         automaticQuality: false,
         preferredQuality: quality,
       });
-    } else if (store.source.type === "hls") {
+    } else if (store.source.type === "hls" || store.source.type === "dash") {
       store.display?.changeQuality(false, quality);
     }
   },

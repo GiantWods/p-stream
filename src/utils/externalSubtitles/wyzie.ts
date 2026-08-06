@@ -51,16 +51,16 @@ function originFromStream(): string | null {
   const src = state.source;
   if (!src) return null;
   const url =
-    src.type === "hls"
-      ? src.url
-      : Object.values(src.qualities ?? {}).find((q) => q?.url)?.url ?? "";
+    src.type === "file"
+      ? (Object.values(src.qualities ?? {}).find((q) => q?.url)?.url ?? "")
+      : src.url;
   const lower = url.toLowerCase();
   if (/blu[\W_]?ray|bdrip/.test(lower)) return "BLURAY";
   if (/web[\W_]?dl/.test(lower)) return "WEB-DL";
   if (/webrip/.test(lower)) return "WEBRIP";
   if (/hdtv/.test(lower)) return "HDTV";
   if (/dvdrip|dvd/.test(lower)) return "DVD";
-  if (src.type === "hls") return "WEB";
+  if (src.type === "hls" || src.type === "dash") return "WEB";
   return null;
 }
 
@@ -72,9 +72,9 @@ function collectReleaseTokens(): string[] {
   const src = state.source;
   if (src) {
     const url =
-      src.type === "hls"
-        ? src.url
-        : Object.values(src.qualities ?? {}).find((qv) => qv?.url)?.url ?? "";
+      src.type === "file"
+        ? (Object.values(src.qualities ?? {}).find((qv) => qv?.url)?.url ?? "")
+        : src.url;
     const lower = url.toLowerCase();
     for (const tag of ["2160p", "1080p", "720p", "480p", "360p", "hdr", "x265", "x264", "h264", "h265", "10bit", "atmos", "ddp5", "ac3"]) {
       if (lower.includes(tag)) tokens.add(tag);

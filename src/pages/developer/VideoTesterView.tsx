@@ -25,13 +25,14 @@ const testMeta: PlayerMeta = {
   poster: "https://image.tmdb.org/t/p/w342//4BMG9hk9NvSBeQvC82sVmVRK140.jpg",
 };
 
-const testStreams: Record<StreamType, string> = {
+const testStreams: Record<"hls" | "mp4", string> = {
   hls: "https://alpha-charlott.github.io/video-openh264/Sintel_master.m3u8",
   mp4: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
 };
 
 const streamTypes: Record<StreamType, string> = {
   hls: "HLS",
+  dash: "DASH",
   mp4: "MP4",
 };
 
@@ -98,6 +99,12 @@ export default function VideoTesterView() {
           url,
           ...(Object.keys(headersObj).length > 0 && { headers: headersObj }),
         };
+      } else if (type === "dash") {
+        source = {
+          type: "dash",
+          url,
+          ...(Object.keys(headersObj).length > 0 && { headers: headersObj }),
+        };
       } else if (type === "mp4") {
         source = {
           type: "file",
@@ -115,8 +122,8 @@ export default function VideoTesterView() {
       if (extensionState === "success" && Object.keys(headersObj).length > 0) {
         // Create a mock Stream object for prepareStream
         const mockStream: any = {
-          type: type === "hls" ? "hls" : "file",
-          ...(type === "hls"
+          type: type === "hls" || type === "dash" ? type : "file",
+          ...(type === "hls" || type === "dash"
             ? { playlist: url }
             : {
                 qualities: {

@@ -4,7 +4,7 @@ import { QualityStore } from "@/stores/quality";
 
 export type SourceQuality = Qualities;
 
-export type StreamType = "hls" | "mp4";
+export type StreamType = "hls" | "dash" | "mp4";
 
 export type SourceFileStream = {
   type: "mp4";
@@ -27,6 +27,12 @@ export type SourceSliceSource =
     }
   | {
       type: "hls";
+      url: string;
+      headers?: Stream["headers"];
+      preferredHeaders?: Stream["preferredHeaders"];
+    }
+  | {
+      type: "dash";
       url: string;
       headers?: Stream["headers"];
       preferredHeaders?: Stream["preferredHeaders"];
@@ -90,7 +96,7 @@ export function selectQuality(
   stream: LoadableSource;
   quality: null | SourceQuality;
 } {
-  if (source.type === "hls")
+  if (source.type === "hls" || source.type === "dash")
     return {
       stream: source,
       quality: null,
