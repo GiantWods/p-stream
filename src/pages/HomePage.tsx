@@ -27,6 +27,7 @@ import { MediaItem } from "@/utils/media/mediaTypes";
 
 import { Button } from "./About";
 import { AdsPart } from "./parts/home/AdsPart";
+import { AppsNotice } from "./parts/home/AppsNotice";
 import { HomeAd } from "./parts/home/HomeAd";
 import { SupportBar } from "./parts/home/SupportBar";
 import { ZliveNotice } from "./parts/home/ZliveNotice";
@@ -164,6 +165,7 @@ export function HomePage() {
   return (
     <HomeLayout showBg={showBg}>
       {!search && <ZliveNotice />}
+      {!search && <AppsNotice />}
       <div className="relative mb-2">
         {hasWideMargins && (
           // Scoped to this hero container (not the viewport), so it scrolls
