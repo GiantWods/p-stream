@@ -200,32 +200,34 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
 
   }
 
-  // dashjs's public getBitrateInfoListFor/setQualityFor/getQualityFor exist
-  // at runtime (documented dash.js API since v3) but aren't declared in the
-  // npm package's index.d.ts, so these go through an `any` cast.
-  function dashBitrateList(): dashjs.BitrateInfo[] {
+  // getBitrateInfoListFor/setQualityFor were the v4 API and don't exist on
+  // v5's MediaPlayer (confirmed live: "getBitrateInfoListFor is not a
+  // function") -- v5 replaced them with getRepresentationsByType /
+  // setRepresentationForTypeByIndex, keyed by the Representation array's own
+  // index (NOT its .absoluteIndex, which is a different internal ordering).
+  function dashRepresentations(): dashjs.Representation[] {
     if (!dash) return [];
-    return (dash as any).getBitrateInfoListFor("video") ?? [];
+    return dash.getRepresentationsByType("video") ?? [];
   }
 
   function reportLevelsForDash() {
     if (!dash) return;
-    const qualities = dashBitrateList()
-      .map((b) => heightToQuality(b.height))
+    const qualities = dashRepresentations()
+      .map((r) => heightToQuality(r.height))
       .filter((v): v is SourceQuality => !!v);
     emit("qualities", qualities);
   }
 
   function setupQualityForDash() {
     if (!dash) return;
-    (dash as any).updateSettings({
+    dash.updateSettings({
       streaming: { abr: { autoSwitchBitrate: { video: automaticQuality } } },
     });
     if (automaticQuality) return;
 
-    const bitrates = dashBitrateList();
-    const qualities = bitrates
-      .map((b) => heightToQuality(b.height))
+    const reps = dashRepresentations();
+    const qualities = reps
+      .map((r) => heightToQuality(r.height))
       .filter((v): v is SourceQuality => !!v);
     const availableQuality = getPreferredQuality(qualities, {
       lastChosenQuality: preferenceQuality,
@@ -233,19 +235,20 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
     });
     if (!availableQuality) return;
 
-    // Highest bitrate rung matching the chosen quality bucket.
+    // Highest-bandwidth rung matching the chosen quality bucket.
     let bestIndex = -1;
-    let bestBitrate = -1;
-    bitrates.forEach((b, i) => {
+    let bestBandwidth = -1;
+    reps.forEach((r, i) => {
       if (
-        heightToQuality(b.height) === availableQuality &&
-        b.bitrate > bestBitrate
+        heightToQuality(r.height) === availableQuality &&
+        r.bandwidth > bestBandwidth
       ) {
         bestIndex = i;
-        bestBitrate = b.bitrate;
+        bestBandwidth = r.bandwidth;
       }
     });
-    if (bestIndex !== -1) (dash as any).setQualityFor("video", bestIndex);
+    if (bestIndex !== -1)
+      dash.setRepresentationForTypeByIndex("video", bestIndex);
   }
 
   function setupSource(vid: HTMLVideoElement, src: LoadableSource) {
@@ -446,12 +449,12 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
         reportLevelsForDash();
         setupQualityForDash();
       });
-      dash.on(dashjs.MediaPlayer.events.QUALITY_CHANGE_RENDERED, (data: any) => {
+      dash.on(dashjs.MediaPlayer.events.REPRESENTATION_SWITCH, (data: any) => {
         if (qualityChangeTimeout) return;
         if (data?.mediaType !== "video") return;
-        const bitrates = dashBitrateList();
-        const level = bitrates[data.newQuality];
-        const currentQuality = heightToQuality(level?.height);
+        const currentQuality = heightToQuality(
+          data?.currentRepresentation?.height,
+        );
         emit(
           "changedquality",
           automaticQuality ? currentQuality : preferenceQuality,
