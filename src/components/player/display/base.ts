@@ -247,8 +247,12 @@ export function makeVideoElementDisplayInterface(): DisplayInterface {
         bestBandwidth = r.bandwidth;
       }
     });
+    // forceReplace=true: without it, a manual switch only applies to
+    // segments requested from here on -- on a short/fully-buffered clip
+    // there may be no more segments left to fetch, so the switch would
+    // silently do nothing (confirmed live on a 60s test clip).
     if (bestIndex !== -1)
-      dash.setRepresentationForTypeByIndex("video", bestIndex);
+      dash.setRepresentationForTypeByIndex("video", bestIndex, true);
   }
 
   function setupSource(vid: HTMLVideoElement, src: LoadableSource) {
