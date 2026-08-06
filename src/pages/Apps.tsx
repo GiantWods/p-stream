@@ -4,8 +4,7 @@ import { PageTitle } from "@/pages/parts/util/PageTitle";
 
 import { SubPageLayout } from "./layouts/SubPageLayout";
 
-const ANDROID_RELEASES_URL =
-  "https://github.com/alturyxx-gif/ZStream-Android/releases";
+const ANDROID_APK_DOWNLOAD_URL = "https://apps.fontaine.lol/ZStream-Android.apk";
 const WINDOWS_APP_DOWNLOAD_URL = "https://apps.fontaine.lol/zstream-windows.exe";
 
 function WindowsGlyph(props: { className?: string }) {
@@ -138,8 +137,8 @@ export function AppsPage() {
         "supports HDR, better sources, and more",
         "new builds published on GitHub",
       ],
-      cta: "view releases",
-      onClick: () => window.open(ANDROID_RELEASES_URL, "_blank"),
+      cta: "download APK",
+      onClick: () => window.open(ANDROID_APK_DOWNLOAD_URL, "_blank"),
     },
     {
       key: "ios",

@@ -2,6 +2,7 @@ import { Icon, Icons } from "@/components/Icon";
 import { FancyModal } from "@/components/overlays/Modal";
 
 const WINDOWS_APP_DOWNLOAD_URL = "https://apps.fontaine.lol/zstream-windows.exe";
+const ANDROID_APK_DOWNLOAD_URL = "https://apps.fontaine.lol/ZStream-Android.apk";
 
 interface DownloadOption {
   key: string;
@@ -28,9 +29,9 @@ function optionsFor(): DownloadOption[] {
       key: "android-tv",
       icon: Icons.DOWNLOAD,
       title: "Android & TV App",
-      subtitle: "APK releases for Android phones, tablets, and Android TV.",
-      cta: "View Releases",
-      href: "https://github.com/alturyxx-gif/ZStream-Android/releases",
+      subtitle: "APK for Android phones, tablets, and Android TV.",
+      cta: "Download",
+      href: ANDROID_APK_DOWNLOAD_URL,
       iconClass: "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
     },
   ];
