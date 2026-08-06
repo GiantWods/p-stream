@@ -33,6 +33,8 @@ export interface InterfaceSlice {
 
     isShuffled: boolean;
     shuffleSeasonId: string | null;
+    // which show the shuffle session belongs to - keeps it from leaking into other series
+    shuffleTmdbId: string | null;
     shufflePool: PlayerShufflePoolItem[];
     shuffledEpisodeIds: string[];
 
@@ -56,7 +58,11 @@ export interface InterfaceSlice {
   setShouldStartFromBeginning(val: boolean): void;
   setSpeedBoosted(state: boolean): void;
   setShowSpeedIndicator(state: boolean): void;
-  setShuffle(isShuffled: boolean, seasonId?: string | null): void;
+  setShuffle(
+    isShuffled: boolean,
+    seasonId?: string | null,
+    tmdbId?: string | null,
+  ): void;
   setShufflePool(pool: PlayerShufflePoolItem[]): void;
   setShuffledEpisodeIds(ids: string[]): void;
   addShuffledEpisodeId(id: string): void;
@@ -81,6 +87,7 @@ export const createInterfaceSlice: MakeSlice<InterfaceSlice> = (set, get) => ({
     showSpeedIndicator: false,
     isShuffled: false,
     shuffleSeasonId: null,
+    shuffleTmdbId: null,
     shufflePool: [],
     shuffledEpisodeIds: [],
   },
@@ -144,10 +151,11 @@ export const createInterfaceSlice: MakeSlice<InterfaceSlice> = (set, get) => ({
       s.interface.showSpeedIndicator = state;
     });
   },
-  setShuffle(isShuffled, seasonId = null) {
+  setShuffle(isShuffled, seasonId = null, tmdbId = null) {
     set((s) => {
       s.interface.isShuffled = isShuffled;
       s.interface.shuffleSeasonId = isShuffled ? seasonId : null;
+      s.interface.shuffleTmdbId = isShuffled ? tmdbId : null;
       s.interface.shufflePool = [];
       s.interface.shuffledEpisodeIds = [];
     });

@@ -105,8 +105,13 @@ export function NextEpisodeButton(props: {
   const isHidden = usePlayerStore((s) => s.interface.hideNextEpisodeBtn);
   const meta = usePlayerStore((s) => s.meta);
   const isShuffled = usePlayerStore((s) => s.interface.isShuffled);
+  const shuffleTmdbId = usePlayerStore((s) => s.interface.shuffleTmdbId);
   const { setDirectMeta } = usePlayerMeta();
   const metaType = usePlayerStore((s) => s.meta?.type);
+  const shuffleActive =
+    isShuffled &&
+    meta?.type === "show" &&
+    (!shuffleTmdbId || shuffleTmdbId === meta?.tmdbId);
   const time = usePlayerStore((s) => s.progress.time);
   const enableAutoplay = usePreferencesStore((s) => s.enableAutoplay);
   const enableSkipCredits = usePreferencesStore((s) => s.enableSkipCredits);
@@ -165,9 +170,9 @@ export function NextEpisodeButton(props: {
     let shufflePick: NonNullable<
       Awaited<ReturnType<typeof getShuffledNextPick>>
     > | null = null;
-    if (isShuffled && meta.type === "show") {
+    if (shuffleActive) {
       shufflePick = await getShuffledNextPick(meta);
-      if (!shufflePick) return;
+      // if there's no shuffle pick we fall through to the normal next below
     }
 
     const metaCopy = { ...meta };
@@ -208,7 +213,7 @@ export function NextEpisodeButton(props: {
     nextSeason,
     sourceId,
     setLastSuccessfulSource,
-    isShuffled,
+    shuffleActive,
   ]);
 
   const startCurrentEpisodeFromBeginning = useCallback(() => {
@@ -249,7 +254,7 @@ export function NextEpisodeButton(props: {
 
   if (!props.inControl) return null;
   if (!meta?.episode) return null;
-  if (!isShuffled && !nextEp) return null;
+  if (!shuffleActive && !nextEp) return null;
   if (metaType !== "show") return null;
 
   if (props.showAsButton) {
@@ -261,7 +266,7 @@ export function NextEpisodeButton(props: {
         className="w-full"
       >
         <Icon className="mr-2" icon={Icons.SKIP_EPISODE} />
-        {!isShuffled && isLastEpisode && nextEp
+        {!shuffleActive && isLastEpisode && nextEp
           ? t("player.nextEpisode.nextSeason")
           : t("player.nextEpisode.next")}
       </Button>
@@ -291,7 +296,7 @@ export function NextEpisodeButton(props: {
           className="bg-buttons-primary hover:bg-buttons-primaryHover text-buttons-primaryText flex justify-center items-center"
         >
           <Icon className="text-xl mr-1" icon={Icons.SKIP_EPISODE} />
-          {!isShuffled && isLastEpisode && nextEp
+          {!shuffleActive && isLastEpisode && nextEp
             ? t("player.nextEpisode.nextSeason")
             : t("player.nextEpisode.next")}
         </ActionButton>

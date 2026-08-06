@@ -10,6 +10,7 @@ import {
   selectQuality,
 } from "@/stores/player/utils/qualities";
 import { useQualityStore } from "@/stores/quality";
+import { usePreferencesStore } from "@/stores/preferences";
 import googletranslate from "@/utils/translation/googletranslate";
 import { translate } from "@/utils/translation/index";
 import { ValuesOf } from "@/utils/common/typeguard";
@@ -270,7 +271,13 @@ export const createSourceSlice: MakeSlice<SourceSlice> = (set, get) => ({
     let qualities: string[] = [];
     if (stream.type === "file") qualities = Object.keys(stream.qualities);
     const qualityPreferences = useQualityStore.getState();
-    const loadableStream = selectQuality(stream, qualityPreferences.quality);
+    const preferHighestResolution =
+      usePreferencesStore.getState().preferredMinimumResolution !== "none";
+    const loadableStream = selectQuality(
+      stream,
+      qualityPreferences.quality,
+      { preferHighestResolution },
+    );
 
     set((s) => {
       s.source = stream;
@@ -295,10 +302,16 @@ export const createSourceSlice: MakeSlice<SourceSlice> = (set, get) => ({
     const store = get();
     if (!store.source) return;
     const qualityPreferences = useQualityStore.getState();
-    const loadableStream = selectQuality(store.source, {
-      automaticQuality: qualityPreferences.quality.automaticQuality,
-      lastChosenQuality: qualityPreferences.quality.lastChosenQuality,
-    });
+    const preferHighestResolution =
+      usePreferencesStore.getState().preferredMinimumResolution !== "none";
+    const loadableStream = selectQuality(
+      store.source,
+      {
+        automaticQuality: qualityPreferences.quality.automaticQuality,
+        lastChosenQuality: qualityPreferences.quality.lastChosenQuality,
+      },
+      { preferHighestResolution },
+    );
     set((s) => {
       s.interface.error = undefined;
       s.status = playerStatus.PLAYING;
@@ -306,7 +319,10 @@ export const createSourceSlice: MakeSlice<SourceSlice> = (set, get) => ({
     store.display?.load({
       source: loadableStream.stream,
       startAt,
-      automaticQuality: qualityPreferences.quality.automaticQuality,
+      // opt-in forces the top quality - for HLS this starts at the highest level
+      automaticQuality:
+        preferHighestResolution ||
+        qualityPreferences.quality.automaticQuality,
       preferredQuality: qualityPreferences.quality.lastChosenQuality,
     });
   },

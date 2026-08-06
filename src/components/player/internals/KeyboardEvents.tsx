@@ -5,7 +5,7 @@ import { MWMediaType } from "@/backend/metadata/types/mw";
 import { useCaptions } from "@/components/player/hooks/useCaptions";
 import { usePlayerMeta } from "@/components/player/hooks/usePlayerMeta";
 import { useVolume } from "@/components/player/hooks/useVolume";
-import { getShuffledNextPick } from "@/components/player/utils/shuffle";
+import { getShuffledNextPick, isShuffleActive } from "@/components/player/utils/shuffle";
 import { useOverlayRouter } from "@/hooks/useOverlayRouter";
 import { useOverlayStack } from "@/stores/interface/overlayStack";
 import { usePlayerStore } from "@/stores/player/store";
@@ -93,24 +93,26 @@ export function KeyboardEvents() {
   const navigateToNextEpisode = useCallback(async () => {
     if (!meta || meta.type !== "show" || !meta.episode) return;
 
-    if (usePlayerStore.getState().interface.isShuffled) {
+    if (isShuffleActive(meta)) {
       const pick = await getShuffledNextPick(meta);
-      if (!pick) return;
-      if (sourceId) {
-        setLastSuccessfulSource(sourceId);
+      // no shuffle pick (e.g. everything filtered out) -> fall back to normal next below
+      if (pick) {
+        if (sourceId) {
+          setLastSuccessfulSource(sourceId);
+        }
+        const metaCopy = { ...meta };
+        metaCopy.episode = pick.episode;
+        metaCopy.season = {
+          number: pick.season.number,
+          tmdbId: pick.season.tmdbId,
+          title: pick.season.title,
+        };
+        setShouldStartFromBeginning(true);
+        setDirectMeta(metaCopy);
+        const defaultProgress = { duration: 0, watched: 0 };
+        updateItem({ meta: metaCopy, progress: defaultProgress });
+        return;
       }
-      const metaCopy = { ...meta };
-      metaCopy.episode = pick.episode;
-      metaCopy.season = {
-        number: pick.season.number,
-        tmdbId: pick.season.tmdbId,
-        title: pick.season.title,
-      };
-      setShouldStartFromBeginning(true);
-      setDirectMeta(metaCopy);
-      const defaultProgress = { duration: 0, watched: 0 };
-      updateItem({ meta: metaCopy, progress: defaultProgress });
-      return;
     }
 
     // Check if we're at the last episode of the current season

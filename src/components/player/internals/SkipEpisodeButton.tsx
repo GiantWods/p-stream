@@ -17,6 +17,11 @@ interface SkipEpisodeButtonProps {
 export function SkipEpisodeButton(props: SkipEpisodeButtonProps) {
   const meta = usePlayerStore((s) => s.meta);
   const isShuffled = usePlayerStore((s) => s.interface.isShuffled);
+  const shuffleTmdbId = usePlayerStore((s) => s.interface.shuffleTmdbId);
+  const shuffleActive =
+    isShuffled &&
+    meta?.type === "show" &&
+    (!shuffleTmdbId || shuffleTmdbId === meta?.tmdbId);
   const { setDirectMeta } = usePlayerMeta();
   const setShouldStartFromBeginning = usePlayerStore(
     (s) => s.setShouldStartFromBeginning,
@@ -38,11 +43,13 @@ export function SkipEpisodeButton(props: SkipEpisodeButtonProps) {
 
     let targetEp = nextEp;
     let targetSeason = meta.season;
-    if (isShuffled && meta.type === "show") {
+    if (shuffleActive) {
       const pick = await getShuffledNextPick(meta);
-      if (!pick) return;
-      targetEp = pick.episode;
-      targetSeason = pick.season;
+      // no shuffle pick (e.g. everything filtered out) -> fall back to normal next
+      if (pick) {
+        targetEp = pick.episode;
+        targetSeason = pick.season;
+      }
     }
     if (!targetEp) return;
 
@@ -72,14 +79,14 @@ export function SkipEpisodeButton(props: SkipEpisodeButtonProps) {
     updateItem,
     sourceId,
     setLastSuccessfulSource,
-    isShuffled,
+    shuffleActive,
   ]);
 
   // Don't show the button when not shuffling and there's no next episode
   if (!props.inControl) return null;
   if (!meta?.episode) return null;
   if (meta.type !== "show") return null;
-  if (!isShuffled && !nextEp) return null;
+  if (!shuffleActive && !nextEp) return null;
 
   return (
     <VideoPlayerButton

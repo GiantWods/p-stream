@@ -551,6 +551,7 @@
     "similar": "Similar",
     "shuffleAll": "Shuffle entire series",
     "shuffleSeason": "Shuffle this season",
+    "shuffleDisable": "Turn off shuffle",
     "collection": {
       "movies": "Movies",
       "movie": "Movie",
