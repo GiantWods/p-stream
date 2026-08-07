@@ -44,23 +44,38 @@ const qualitySorting: Record<SourceQuality, number> = {
   "480": 20,
   "720": 30,
   "1080": 40,
-  "4k": 35, // 4k has lower priority, you need faster internet for it
+  "4k": 35, // 4k lower priority by default (bandwidth) - opt-in via min resolution
 };
 const sortedQualities: SourceQuality[] = Object.entries(qualitySorting)
   .sort((a, b) => b[1] - a[1])
   .map<SourceQuality>((v) => v[0] as SourceQuality);
 
+// absolute resolution order, highest first - used when min-resolution (opt-in) is active
+const resolutionQualities: SourceQuality[] = [
+  "4k",
+  "1080",
+  "720",
+  "480",
+  "360",
+  "unknown",
+];
+
 export function getPreferredQuality(
   availableQualites: SourceQuality[],
   qualityPreferences: QualityStore["quality"],
+  opts?: { preferHighestResolution?: boolean },
 ) {
   if (
+    opts?.preferHighestResolution ||
     qualityPreferences.automaticQuality ||
     qualityPreferences.lastChosenQuality === null ||
     qualityPreferences.lastChosenQuality === "unknown"
   ) {
-    // For automatic quality, select the best available quality
-    // Sort by our quality preference order and pick the first (best) available
+    // opt-in: take the absolute best resolution so we actually get 4k
+    if (opts?.preferHighestResolution) {
+      return resolutionQualities.find((v) => availableQualites.includes(v));
+    }
+    // normal automatic: sort by our quality preference order and pick best
     return sortedQualities.find((v) => availableQualites.includes(v));
   }
 
@@ -92,6 +107,7 @@ export function getPreferredQuality(
 export function selectQuality(
   source: SourceSliceSource,
   qualityPreferences: QualityStore["quality"],
+  opts?: { preferHighestResolution?: boolean },
 ): {
   stream: LoadableSource;
   quality: null | SourceQuality;
@@ -103,7 +119,7 @@ export function selectQuality(
     };
   if (source.type === "file") {
     const availableQualities = Object.entries(source.qualities)
-      .filter((entry) => (entry[1].url.length ?? 0) > 0)
+      .filter((entry) => (entry[1]?.url?.length ?? 0) > 0)
       .map((entry) => entry[0]) as SourceQuality[];
     // For file sources (MP4), always use manual quality selection since they don't support switching
     const manualQualityPreferences = {
@@ -113,6 +129,7 @@ export function selectQuality(
     const quality = getPreferredQuality(
       availableQualities,
       manualQualityPreferences,
+      opts,
     );
     if (quality) {
       const stream = source.qualities[quality];
