@@ -107,18 +107,6 @@ export function RealPlayerView() {
     };
   }, [paramsData, reset]);
 
-  const setShuffle = usePlayerStore((s) => s.setShuffle);
-  const location = useLocation();
-  useEffect(() => {
-    const searchParams = new URLSearchParams(location.search);
-    if (searchParams.get("shuffle") !== "1") return;
-    const seasonId = searchParams.get("shuffleSeason");
-    // media param is `tmdb-tv-{id}-{slug}` - the tmdb id sits at index 2
-    const tmdbId = params.media?.split("-")[2] ?? null;
-    setShuffle(true, seasonId || null, tmdbId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Auto-open watch party menu if URL contains watchparty parameter
   useEffect(() => {
     if (openedWatchPartyRef.current) return;

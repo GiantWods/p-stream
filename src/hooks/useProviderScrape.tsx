@@ -1,9 +1,4 @@
-import {
-  FullScraperEvents,
-  RunOutput,
-  ScrapeMedia,
-  Stream,
-} from "@p-stream/providers";
+import { FullScraperEvents, RunOutput, ScrapeMedia } from "@p-stream/providers";
 import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 
 import { isExtensionActiveCached } from "@/backend/extension/messaging";
@@ -13,7 +8,6 @@ import { getProviders } from "@/backend/providers/providers";
 import { getMediaKey } from "@/stores/player/slices/source";
 import { usePlayerStore } from "@/stores/player/store";
 import { usePreferencesStore } from "@/stores/preferences";
-import { createM3U8ProxyUrl } from "@/components/player/utils/proxy";
 
 export interface ScrapingItems {
   id: string;
@@ -49,96 +43,13 @@ const minimumResolutionThreshold: Record<
   "4k": 2160,
 };
 
-// cache measured hls resolution per playlist so we don't refetch on every pass
-const hlsResolutionCache = new Map<string, number | null>();
-const HLS_RESOLUTION_FETCH_TIMEOUT = 5000;
+function getRunOutputBestResolutionScore(output: RunOutput): number {
+  if (output.stream.type !== "file") return 0;
 
-function cacheHlsResolution(
-  playlist: string,
-  score: number | null,
-): number | null {
-  hlsResolutionCache.set(playlist, score);
-  if (hlsResolutionCache.size > 100) {
-    const oldest = hlsResolutionCache.keys().next().value;
-    if (oldest !== undefined) hlsResolutionCache.delete(oldest);
-  }
-  return score;
-}
-
-// map an hls level height to the same resolution score used for file sources
-function resolutionScoreFromHeight(height: number): number {
-  if (height >= 1800) return 2160; // 4k class
-  if (height >= 800) return 1080;
-  if (height >= 600) return 720;
-  if (height >= 420) return 480;
-  return 360;
-}
-
-// read the max RESOLUTION from an hls master playlist so we actually know if a
-// source is 4k. only returns a real score when we can prove it - if the fetch
-// or parse fails we return null (never a false "this is 4k").
-async function getHlsStreamResolutionScore(
-  stream: Stream,
-): Promise<number | null> {
-  const playlist = stream.type === "hls" ? stream.playlist : undefined;
-  if (!playlist) return null;
-  if (hlsResolutionCache.has(playlist))
-    return hlsResolutionCache.get(playlist) ?? null;
-
-  try {
-    // try direct first, then fall back to the m3u8 proxy (covers extension-mode
-    // where the page can't fetch the original url due to cors)
-    const attempts = [playlist, createM3U8ProxyUrl(playlist)];
-    for (const target of attempts) {
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(
-          () => controller.abort(),
-          HLS_RESOLUTION_FETCH_TIMEOUT,
-        );
-        const response = await fetch(target, {
-          credentials: "include",
-          signal: controller.signal,
-        });
-        clearTimeout(timeout);
-        if (!response.ok) continue;
-        const text = await response.text();
-
-        let maxHeight = 0;
-        const resolver = /RESOLUTION=(\d+)x(\d+)/gi;
-        for (
-          let match = resolver.exec(text);
-          match !== null;
-          match = resolver.exec(text)
-        ) {
-          const height = Number.parseInt(match[2] ?? "", 10);
-          if (Number.isFinite(height) && height > maxHeight) maxHeight = height;
-        }
-        if (maxHeight <= 0) return cacheHlsResolution(playlist, null);
-        return cacheHlsResolution(playlist, resolutionScoreFromHeight(maxHeight));
-      } catch {
-        // try next target on failure
-      }
-    }
-    return cacheHlsResolution(playlist, null);
-  } catch {
-    return cacheHlsResolution(playlist, null);
-  }
-}
-
-async function getRunOutputBestResolutionScore(
-  output: RunOutput,
-): Promise<number> {
-  if (output.stream.type === "file") {
-    return Object.entries(output.stream.qualities).reduce((best, [quality, stream]) => {
-      if (!stream?.url) return best;
-      return Math.max(best, sourceQualityScore[quality] ?? 0);
-    }, 0);
-  }
-
-  // hls: measure the real playlist top resolution. unknown (can't fetch/parse)
-  // is NOT counted as 4k, so we never claim a resolution we can't prove.
-  return (await getHlsStreamResolutionScore(output.stream)) ?? 0;
+  return Object.entries(output.stream.qualities).reduce((best, [quality, stream]) => {
+    if (!stream?.url) return best;
+    return Math.max(best, sourceQualityScore[quality] ?? 0);
+  }, 0);
 }
 
 type ScraperEvent<Event extends keyof FullScraperEvents> = Parameters<
@@ -411,7 +322,7 @@ export function useScrape() {
 
         if (!output) break;
 
-        const sourceScore = await getRunOutputBestResolutionScore(output);
+        const sourceScore = getRunOutputBestResolutionScore(output);
         if (sourceScore > bestFallbackScore) {
           bestFallbackScore = sourceScore;
           bestFallbackOutput = output;

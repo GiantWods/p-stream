@@ -2,7 +2,6 @@ import { ReactNode, useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { BrandPill } from "@/components/layout/BrandPill";
-import { Icon, Icons } from "@/components/Icon";
 import { Player } from "@/components/player";
 import { SkipSegmentButton } from "@/components/player/atoms/SkipSegmentButton";
 import { ThumbsFeedback } from "@/components/player/atoms/ThumbsFeedback";
@@ -40,40 +39,6 @@ export function PlayerPart(props: PlayerPartProps) {
   const { isHost, enabled } = useWatchPartyStore();
   const { t } = useTranslation();
   const meta = usePlayerStore((s) => s.meta);
-  const isShuffled = usePlayerStore((s) => s.interface.isShuffled);
-  const shuffleTmdbId = usePlayerStore((s) => s.interface.shuffleTmdbId);
-  const setShuffle = usePlayerStore((s) => s.setShuffle);
-  const shuffleActive =
-    isShuffled &&
-    meta?.type === "show" &&
-    (!shuffleTmdbId || shuffleTmdbId === meta?.tmdbId);
-
-  const toggleShuffle = useCallback(() => {
-    if (!meta || meta.type !== "show") return;
-    if (shuffleActive) {
-      setShuffle(false);
-    } else {
-      setShuffle(true, null, meta.tmdbId || null);
-    }
-  }, [shuffleActive, meta, setShuffle]);
-
-  const shuffleToggle =
-    meta?.type === "show" ? (
-      <button
-        type="button"
-        onClick={toggleShuffle}
-        aria-pressed={shuffleActive}
-        title={shuffleActive ? t("details.shuffleDisable") : t("details.shuffleAll")}
-        className={`tabbable p-2 rounded-full hover:bg-video-buttonBackground hover:bg-opacity-50 active:scale-110 transition-transform duration-100 relative ${
-          shuffleActive ? "text-buttons-primary" : "text-white"
-        }`}
-      >
-        <Icon icon={Icons.SHUFFLE} className="text-2xl" />
-        {shuffleActive ? (
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-buttons-primary" />
-        ) : null}
-      </button>
-    ) : null;
 
   const inControl = !enabled || isHost;
 
@@ -239,7 +204,6 @@ export function PlayerPart(props: PlayerPartProps) {
           </Player.LeftSideControls>
           <div className="flex items-center space-x-3">
             <Player.Episodes inControl={inControl} />
-            {shuffleToggle}
             <Player.SkipEpisodeButton
               inControl={inControl}
               onChange={props.onMetaChange}
@@ -271,7 +235,6 @@ export function PlayerPart(props: PlayerPartProps) {
               <Player.Pip />
             )}
             <Player.Episodes inControl={inControl} />
-            {shuffleToggle}
             {status === playerStatus.PLAYING ? (
               <div className="hidden ssm:block">
                 <Player.Captions />
