@@ -10,17 +10,28 @@ export function Card(props: {
   className?: string;
   onClick?: () => void;
 }) {
+  // A clickable card was a div with an onClick and nothing else, so onboarding's
+  // only real choices could not be reached by Tab, let alone by a remote — and
+  // it is the first thing a new user sees. Enter handled the same way as every
+  // other hand-rolled activation here: see the note in LinksDropdown.
   return (
     <div
       className={classNames(
         {
           "bg-onboarding-card duration-300 border border-onboarding-border rounded-lg p-7": true,
-          "hover:bg-onboarding-cardHover transition-colors cursor-pointer":
+          "hover:bg-onboarding-cardHover transition-colors cursor-pointer tabbable":
             !!props.onClick,
         },
         props.className,
       )}
+      role={props.onClick ? "button" : undefined}
+      tabIndex={props.onClick ? 0 : undefined}
       onClick={props.onClick}
+      onKeyDown={(e) => {
+        if (!props.onClick || e.key !== "Enter" || e.repeat) return;
+        e.preventDefault();
+        props.onClick();
+      }}
     >
       {props.children}
     </div>

@@ -39,6 +39,19 @@ export function Volume(props: Props) {
     toggleMute();
   }, [toggleMute]);
 
+  // Enter only, deliberately. Space is play/pause for the whole player and
+  // KeyboardEvents preventDefaults it, which is why the real <button> controls
+  // beside this one don't activate on Space either. Handling it here would
+  // mute *and* pause on one press.
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      toggleMute();
+    },
+    [toggleMute],
+  );
+
   const handleMouseEnter = useCallback(async () => {
     if (await canChangeVolume()) setHovering(true);
     document.body.classList.add("overflow-y-hidden");
@@ -83,7 +96,13 @@ export function Volume(props: Props) {
       onWheel={handleWheel}
     >
       <div className="pointer-events-auto flex cursor-pointer items-center py-0 touch-none">
-        <div className="px-4 text-2xl text-white" onClick={handleClick}>
+        <div
+          className="tabbable rounded px-4 text-2xl text-white"
+          onClick={handleClick}
+          onKeyDown={handleKeyDown}
+          role="button"
+          tabIndex={0}
+        >
           <Icon icon={getVolumeIcon(percentage / 100)} />
         </div>
         <div

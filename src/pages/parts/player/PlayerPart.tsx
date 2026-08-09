@@ -1,4 +1,4 @@
-import { ReactNode, useCallback, useRef, useState } from "react";
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { BrandPill } from "@/components/layout/BrandPill";
@@ -52,17 +52,30 @@ export function PlayerPart(props: PlayerPartProps) {
   const [isHoldingFullscreen, setIsHoldingFullscreen] = useState(false);
   const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  document.addEventListener("keydown", (event) => {
-    if (event.key === "Shift") {
-      setIsShifting(true);
-    }
-  });
+  // Holding Shift swaps the fullscreen button for the widescreen one. These
+  // have to live in an effect: bound during render they were re-added on
+  // every re-render and never removed.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Shift") {
+        setIsShifting(true);
+      }
+    };
 
-  document.addEventListener("keyup", (event) => {
-    if (event.key === "Shift") {
-      setIsShifting(false);
-    }
-  });
+    const handleKeyUp = (event: KeyboardEvent) => {
+      if (event.key === "Shift") {
+        setIsShifting(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("keyup", handleKeyUp);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keyup", handleKeyUp);
+    };
+  }, []);
 
   const handleTouchStart = () => {
     if (holdTimeoutRef.current) {
@@ -190,7 +203,14 @@ export function PlayerPart(props: PlayerPartProps) {
             </>
           ) : null}
         </div>
-        <div className="hidden lg:flex justify-between" dir="ltr">
+        {/* Where OK lands: the first candidate inside is play/pause, which is
+            what a remote's centre button is expected to reach. Marked here
+            rather than on the button itself, which renders three times. */}
+        <div
+          data-nav-first
+          className="hidden lg:flex justify-between"
+          dir="ltr"
+        >
           <Player.LeftSideControls>
             {status === playerStatus.PLAYING ? (
               <>

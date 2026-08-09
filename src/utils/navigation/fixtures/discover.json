@@ -1,0 +1,656 @@
+{
+  "surface": "Discover",
+  "path": "/discover",
+  "scope": "document",
+  "scopeDepth": 0,
+  "viewport": {
+    "width": 1920,
+    "height": 1080
+  },
+  "scroll": {
+    "x": 0,
+    "y": 0
+  },
+  "count": 71,
+  "rects": [
+    {
+      "i": 0,
+      "x": 28.69,
+      "y": 22.52,
+      "width": 134.02,
+      "height": 40.97,
+      "tag": "a",
+      "label": "Z-Stream"
+    },
+    {
+      "i": 1,
+      "x": 175,
+      "y": 22.52,
+      "width": 40.98,
+      "height": 40.98,
+      "tag": "a",
+      "label": ""
+    },
+    {
+      "i": 2,
+      "x": 228.28,
+      "y": 22.52,
+      "width": 40.98,
+      "height": 40.98,
+      "tag": "button",
+      "label": "Download"
+    },
+    {
+      "i": 3,
+      "x": 281.56,
+      "y": 22.52,
+      "width": 40.98,
+      "height": 40.98,
+      "tag": "button",
+      "label": "Notifications"
+    },
+    {
+      "i": 4,
+      "x": 334.84,
+      "y": 22.52,
+      "width": 40.98,
+      "height": 40.98,
+      "tag": "button",
+      "label": "Tip Jar"
+    },
+    {
+      "i": 5,
+      "x": 1809.38,
+      "y": 20.48,
+      "width": 81.94,
+      "height": 45.05,
+      "tag": "div",
+      "label": ""
+    },
+    {
+      "i": 6,
+      "x": 16.44,
+      "y": 387.8,
+      "width": 33.17,
+      "height": 33.17,
+      "tag": "button",
+      "label": "Previous slide"
+    },
+    {
+      "i": 7,
+      "x": 1870.39,
+      "y": 387.8,
+      "width": 33.17,
+      "height": 33.17,
+      "tag": "button",
+      "label": "Next slide"
+    },
+    {
+      "i": 8,
+      "x": 336.39,
+      "y": 942.84,
+      "width": 141.64,
+      "height": 49.19,
+      "tag": "button",
+      "label": "Play Now"
+    },
+    {
+      "i": 9,
+      "x": 494.42,
+      "y": 942.84,
+      "width": 145.11,
+      "height": 49.19,
+      "tag": "button",
+      "label": "More Info"
+    },
+    {
+      "i": 10,
+      "x": 655.92,
+      "y": 942.84,
+      "width": 49.19,
+      "height": 49.19,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 11,
+      "x": 871.98,
+      "y": 1030.98,
+      "width": 10.23,
+      "height": 10.23,
+      "tag": "button",
+      "label": "Go to slide 1"
+    },
+    {
+      "i": 12,
+      "x": 889.13,
+      "y": 1029.71,
+      "width": 12.79,
+      "height": 12.79,
+      "tag": "button",
+      "label": "Go to slide 2"
+    },
+    {
+      "i": 13,
+      "x": 908.83,
+      "y": 1030.98,
+      "width": 10.23,
+      "height": 10.23,
+      "tag": "button",
+      "label": "Go to slide 3"
+    },
+    {
+      "i": 14,
+      "x": 927.25,
+      "y": 1030.98,
+      "width": 10.23,
+      "height": 10.23,
+      "tag": "button",
+      "label": "Go to slide 4"
+    },
+    {
+      "i": 15,
+      "x": 945.67,
+      "y": 1030.98,
+      "width": 10.23,
+      "height": 10.23,
+      "tag": "button",
+      "label": "Go to slide 5"
+    },
+    {
+      "i": 16,
+      "x": 964.09,
+      "y": 1030.98,
+      "width": 10.23,
+      "height": 10.23,
+      "tag": "button",
+      "label": "Go to slide 6"
+    },
+    {
+      "i": 17,
+      "x": 982.52,
+      "y": 1030.98,
+      "width": 10.23,
+      "height": 10.23,
+      "tag": "button",
+      "label": "Go to slide 7"
+    },
+    {
+      "i": 18,
+      "x": 1000.94,
+      "y": 1030.98,
+      "width": 10.23,
+      "height": 10.23,
+      "tag": "button",
+      "label": "Go to slide 8"
+    },
+    {
+      "i": 19,
+      "x": 1019.36,
+      "y": 1030.98,
+      "width": 10.23,
+      "height": 10.23,
+      "tag": "button",
+      "label": "Go to slide 9"
+    },
+    {
+      "i": 20,
+      "x": 1037.78,
+      "y": 1030.98,
+      "width": 10.23,
+      "height": 10.23,
+      "tag": "button",
+      "label": "Go to slide 10"
+    },
+    {
+      "i": 21,
+      "x": 756.92,
+      "y": 1072.77,
+      "width": 101.32,
+      "height": 51.63,
+      "tag": "button",
+      "label": "Movies"
+    },
+    {
+      "i": 22,
+      "x": 872.22,
+      "y": 1074,
+      "width": 124.56,
+      "height": 49.17,
+      "tag": "button",
+      "label": "TV Shows"
+    },
+    {
+      "i": 23,
+      "x": 1013.17,
+      "y": 1074,
+      "width": 147.5,
+      "height": 49.17,
+      "tag": "button",
+      "label": "Editor Picks"
+    },
+    {
+      "i": 24,
+      "x": 141.81,
+      "y": 1180.55,
+      "width": 148.31,
+      "height": 20.5,
+      "tag": "a",
+      "label": "View more"
+    },
+    {
+      "i": 25,
+      "x": 135.73,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 374.34,
+      "tag": "div",
+      "label": "Spider-Man: Brand New DayMovie●2026"
+    },
+    {
+      "i": 26,
+      "x": 292.7,
+      "y": 1557.41,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 27,
+      "x": 340.69,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "The OdysseyMovie●2026"
+    },
+    {
+      "i": 28,
+      "x": 497.66,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 29,
+      "x": 545.64,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "SupergirlMovie●2026"
+    },
+    {
+      "i": 30,
+      "x": 702.61,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 31,
+      "x": 750.59,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 374.34,
+      "tag": "div",
+      "label": "Spider-Man: No Way HomeMovie●2021"
+    },
+    {
+      "i": 32,
+      "x": 907.56,
+      "y": 1557.41,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 33,
+      "x": 955.55,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "Masters of the UniverseMovie●2026"
+    },
+    {
+      "i": 34,
+      "x": 1112.52,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 35,
+      "x": 1160.5,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "Disclosure DayMovie●2026"
+    },
+    {
+      "i": 36,
+      "x": 1317.47,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 37,
+      "x": 1365.45,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "ObsessionMovie●2026"
+    },
+    {
+      "i": 38,
+      "x": 1522.42,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 39,
+      "x": 1570.41,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 374.34,
+      "tag": "div",
+      "label": "The Death of Robin HoodMovie●2026"
+    },
+    {
+      "i": 40,
+      "x": 1727.38,
+      "y": 1557.41,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 41,
+      "x": 1775.36,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "MoanaMovie●2026"
+    },
+    {
+      "i": 42,
+      "x": 1932.33,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 43,
+      "x": 1980.31,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "Toy Story 5Movie●2026"
+    },
+    {
+      "i": 44,
+      "x": 2137.28,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 45,
+      "x": 2185.27,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "The Devil's MouthMovie●2026"
+    },
+    {
+      "i": 46,
+      "x": 2342.23,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 47,
+      "x": 2390.22,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "Minions & MonstersMovie●2026"
+    },
+    {
+      "i": 48,
+      "x": 2547.19,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 49,
+      "x": 2595.17,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 374.34,
+      "tag": "div",
+      "label": "Avatar Aang: The Last AirbenderMovie●202"
+    },
+    {
+      "i": 50,
+      "x": 2752.14,
+      "y": 1557.41,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 51,
+      "x": 2800.13,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "BackroomsMovie●2026"
+    },
+    {
+      "i": 52,
+      "x": 2957.09,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 53,
+      "x": 3005.08,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "LeviticusMovie●2026"
+    },
+    {
+      "i": 54,
+      "x": 3162.05,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 55,
+      "x": 3210.03,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "Scary MovieMovie●2026"
+    },
+    {
+      "i": 56,
+      "x": 3367,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 57,
+      "x": 3414.98,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "Spider-ManMovie●2002"
+    },
+    {
+      "i": 58,
+      "x": 3571.95,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 59,
+      "x": 3619.94,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 374.34,
+      "tag": "div",
+      "label": "Spider-Man: HomecomingMovie●2017"
+    },
+    {
+      "i": 60,
+      "x": 3776.91,
+      "y": 1557.41,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 61,
+      "x": 3824.89,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 349.16,
+      "tag": "div",
+      "label": "Project Hail MaryMovie●2026"
+    },
+    {
+      "i": 62,
+      "x": 3981.86,
+      "y": 1532.22,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 63,
+      "x": 4029.84,
+      "y": 1213.78,
+      "width": 195.88,
+      "height": 374.34,
+      "tag": "div",
+      "label": "The Devil Wears Prada 2Movie●2026"
+    },
+    {
+      "i": 64,
+      "x": 4186.81,
+      "y": 1557.41,
+      "width": 34.81,
+      "height": 34.81,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 65,
+      "x": 4246.64,
+      "y": 1213.78,
+      "width": 172.19,
+      "height": 287.09,
+      "tag": "a",
+      "label": "View more"
+    },
+    {
+      "i": 66,
+      "x": 90.22,
+      "y": 1392.07,
+      "width": 17.3,
+      "height": 17.3,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 67,
+      "x": 1812.48,
+      "y": 1392.07,
+      "width": 17.3,
+      "height": 17.3,
+      "tag": "button",
+      "label": ""
+    },
+    {
+      "i": 68,
+      "x": 853.61,
+      "y": 3609.36,
+      "width": 212.78,
+      "height": 49.78,
+      "tag": "button",
+      "label": "View All Movie Lists"
+    },
+    {
+      "i": 69,
+      "x": 20.53,
+      "y": 3948.8,
+      "width": 115.83,
+      "height": 41.56,
+      "tag": "a",
+      "label": "GitHub"
+    },
+    {
+      "i": 70,
+      "x": 144.55,
+      "y": 3948.8,
+      "width": 172.03,
+      "height": 41.56,
+      "tag": "a",
+      "label": "Fluxer/Discord"
+    }
+  ]
+}

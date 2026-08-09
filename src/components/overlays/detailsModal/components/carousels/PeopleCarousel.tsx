@@ -48,7 +48,11 @@ export function CastCarousel({ mediaId, mediaType }: CastCarouselProps) {
 
   return (
     <div className="space-y-4 pt-8">
-      <div className="flex overflow-x-auto scrollbar-none pb-4 gap-4">
+      <div
+        data-nav-row
+        data-nav-remember
+        className="flex overflow-x-auto scrollbar-none pb-4 gap-4"
+      >
         {director && (
           <Link
             to={`/person/${director.id}`}

@@ -16,6 +16,7 @@ import { BookmarksCarousel } from "@/pages/parts/home/BookmarksCarousel";
 import { BookmarksGrid } from "@/pages/parts/home/BookmarksGrid";
 import { GenreChips } from "@/pages/parts/home/GenreChips";
 import { HeroPart } from "@/pages/parts/home/HeroPart";
+import { HomeSearchRow } from "@/pages/parts/home/HomeSearchRow";
 import { WatchingCarousel } from "@/pages/parts/home/WatchingCarousel";
 import { WatchingGrid } from "@/pages/parts/home/WatchingGrid";
 import { SearchListPart } from "@/pages/parts/search/SearchListPart";
@@ -163,7 +164,17 @@ export function HomePage() {
   };
 
   return (
-    <HomeLayout showBg={showBg}>
+    <HomeLayout
+      showBg={showBg}
+      // The featured hero draws its search row across the top of the screen,
+      // level with the nav's icons, so the nav renders it -- see HeroPart's
+      // header for why it cannot stay in the page below.
+      navCenter={
+        enableFeatured ? (
+          <HomeSearchRow searchParams={searchParams} isInFeatured />
+        ) : undefined
+      }
+    >
       {!search && <ZliveNotice />}
       {!search && <AppsNotice />}
       <div className="relative mb-2">
@@ -189,13 +200,7 @@ export function HomePage() {
               onShowDetails={handleShowDetails}
               searching={s.searching}
               shorter
-            >
-              <HeroPart
-                searchParams={searchParams}
-                setIsSticky={setShowBg}
-                isInFeatured
-              />
-            </FeaturedCarousel>
+            />
             {(!search || search.length === 0) && (
               <div className="mt-4 px-8">
                 <GenreChips />

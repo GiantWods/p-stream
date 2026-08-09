@@ -7,6 +7,7 @@ import loadVersion from "vite-plugin-package-version";
 import { VitePWA } from "vite-plugin-pwa";
 import checker from "vite-plugin-checker";
 import { handlebars } from "./plugins/handlebars";
+import { hoverToFocus } from "./plugins/hoverToFocus";
 import { PluginOption, loadEnv, splitVendorChunkPlugin } from "vite";
 import { visualizer } from "rollup-plugin-visualizer";
 
@@ -186,7 +187,9 @@ export default defineConfig(({ mode }) => {
     },
     css: {
       postcss: {
-        plugins: [tailwind(), rtl()],
+        // hoverToFocus runs last on purpose: it needs to see the finished
+        // selectors, including the [dir=…] variants rtl() produces.
+        plugins: [tailwind(), rtl(), hoverToFocus()],
       },
     },
 

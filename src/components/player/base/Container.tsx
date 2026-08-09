@@ -3,6 +3,7 @@ import { ReactNode, RefObject, useEffect, useRef } from "react";
 import { OverlayDisplay } from "@/components/overlays/OverlayDisplay";
 import { AutoSkipSegments } from "@/components/player/internals/AutoSkipSegments";
 import { SkipTracker } from "@/components/player/internals/Backend/SkipTracker";
+import { usePlayerWidgetMode } from "@/components/player/hooks/usePlayerWidgetMode";
 import { GamepadEvents } from "@/components/player/internals/GamepadEvents";
 import { HeadUpdater } from "@/components/player/internals/HeadUpdater";
 import { KeyboardEvents } from "@/components/player/internals/KeyboardEvents";
@@ -65,6 +66,7 @@ function useHovering(containerEl: RefObject<HTMLDivElement>) {
 function BaseContainer(props: { children?: ReactNode }) {
   const containerEl = useRef<HTMLDivElement | null>(null);
   const display = usePlayerStore((s) => s.display);
+  const widgetMode = usePlayerWidgetMode(containerEl);
   useHovering(containerEl);
 
   // report container element to display interface
@@ -75,7 +77,22 @@ function BaseContainer(props: { children?: ReactNode }) {
   }, [display, containerEl]);
 
   return (
-    <div ref={containerEl}>
+    // The two modes, as one attribute swap.
+    //
+    // Transport mode is `data-nav-skip`: directional navigation stays out of
+    // the player entirely, because KeyboardEvents.tsx binds all four arrows on
+    // `window` — up/down to volume, left/right to a locked 5s seek — and the
+    // volume branch does not call preventDefault, so the engine's usual "stand
+    // down if someone claimed this key" check cannot see it.
+    //
+    // Widget mode swaps it for `data-nav-scope`, which is the same promise from
+    // the other side: the controls become candidates, and the player becomes a
+    // hard boundary so an arrow cannot land somewhere behind it.
+    <div
+      ref={containerEl}
+      data-nav-skip={widgetMode ? undefined : ""}
+      data-nav-scope={widgetMode ? "" : undefined}
+    >
       <OverlayDisplay>
         <div className="h-screen select-none">{props.children}</div>
       </OverlayDisplay>

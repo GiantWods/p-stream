@@ -2,19 +2,20 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Icon, Icons } from "@/components/Icon";
+import { useNoticeStackTop } from "@/components/noticeStack";
 
 const STORAGE_KEY = "zstream::zlive-notice-dismissed";
 const ZLIVE_URL = "https://zlive.st";
 
-// Same floating-pill convention as DiscordNotice, stacked directly under it
-// (fixed top offset assumes DiscordNotice's own height + a gap -- if
-// DiscordNotice is dismissed/absent this one just sits slightly lower than
-// it strictly needs to, which is a fine tradeoff for not needing to measure
-// DiscordNotice's real height at runtime).
+// Same floating-pill convention as UpdateNotice, stacked directly under it
+// (see noticeStack.ts -- if UpdateNotice is dismissed/absent this one just
+// sits slightly lower than it strictly needs to, which is a fine tradeoff for
+// not needing to measure UpdateNotice's real height at runtime).
 export function ZliveNotice() {
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [entered, setEntered] = useState(false);
+  const top = useNoticeStackTop(1);
 
   useEffect(() => {
     let dismissed = false;
@@ -44,7 +45,10 @@ export function ZliveNotice() {
   if (!visible) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[calc(max(1.25rem,env(safe-area-inset-top))_+_5.25rem)] z-[199] flex justify-center px-4">
+    <div
+      className="pointer-events-none fixed inset-x-0 z-[599] flex justify-center px-4"
+      style={{ top }}
+    >
       <div
         className={[
           "pointer-events-auto group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-white/10",

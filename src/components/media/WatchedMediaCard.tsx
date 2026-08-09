@@ -63,13 +63,26 @@ export function WatchedMediaCard(props: WatchedMediaCardProps) {
     cursor: props.editable ? (isDragging ? "grabbing" : "grab") : "auto",
   };
 
+  // dnd-kit puts `tabIndex={0}` and `role="button"` on its draggable node so a
+  // keyboard sensor has a handle to grab. There is no keyboard sensor here --
+  // BookmarksGrid registers `PointerSensor` alone -- so this wrapper was a focus
+  // stop on every card in the app that does nothing when activated, and it sits
+  // outside the card, so it is the one focus lands on first.
+  const { tabIndex: _drag, role: _dragRole, ...dragAttributes } = attributes;
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      {...attributes}
+      {...dragAttributes}
       {...listeners}
-      className={isDragging ? "pointer-events-none touch-none" : props.editable ? "touch-none" : ""}
+      className={
+        isDragging
+          ? "pointer-events-none touch-none"
+          : props.editable
+            ? "touch-none"
+            : ""
+      }
     >
       <MediaCard
         media={props.media}

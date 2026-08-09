@@ -41,7 +41,10 @@ export function GenreChips() {
 
   return (
     <div className="w-full mt-6">
+      {/* Only while collapsed. Expanded it wraps onto several visual lines, and
+          a row would stop → at the end of the first one instead of continuing. */}
       <div
+        data-nav-row={expanded ? undefined : ""}
         className={classNames(
           "flex gap-2 py-2 opacity-0 animate-fade-in",
           "transition-[max-height] duration-1000 ease-in-out overflow-hidden",

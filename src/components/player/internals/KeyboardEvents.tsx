@@ -19,6 +19,7 @@ import {
   ShortcutId,
   matchesShortcut,
 } from "@/utils/browser/keyboardShortcuts";
+import { ownsKeyboardInput } from "@/utils/browser/keyboardTarget";
 
 export function KeyboardEvents() {
   const router = useOverlayRouter("");
@@ -70,6 +71,7 @@ export function KeyboardEvents() {
   const enableNumberKeySeeking = usePreferencesStore(
     (s) => s.enableNumberKeySeeking,
   );
+  const widgetMode = usePlayerStore((s) => s.interface.widgetMode);
 
   const [isRolling, setIsRolling] = useState(false);
   const volumeDebounce = useRef<ReturnType<typeof setTimeout> | undefined>();
@@ -318,6 +320,7 @@ export function KeyboardEvents() {
     enableNativeSubtitles,
     setEnableNativeSubtitles,
     enableNumberKeySeeking,
+    widgetMode,
   });
 
   useEffect(() => {
@@ -355,6 +358,7 @@ export function KeyboardEvents() {
       enableNativeSubtitles,
       setEnableNativeSubtitles,
       enableNumberKeySeeking,
+      widgetMode,
     };
   }, [
     setShowVolume,
@@ -385,12 +389,20 @@ export function KeyboardEvents() {
     enableNativeSubtitles,
     setEnableNativeSubtitles,
     enableNumberKeySeeking,
+    widgetMode,
   ]);
 
   useEffect(() => {
     const keydownEventHandler = (evt: KeyboardEvent) => {
-      if (evt.target && (evt.target as HTMLInputElement).nodeName === "INPUT")
-        return;
+      if (ownsKeyboardInput(evt.target)) return;
+
+      // Widget mode: the arrows are navigating the control bar, so none of the
+      // transport bindings below may fire. Blanket rather than arrows-only,
+      // because the player is a piece of UI while it lasts and a stray `k` or
+      // `<` from a keyboard shortcut landing on whatever control happens to be
+      // focused is the same class of surprise the mode exists to remove.
+      // Everything here is untouched in transport mode, which is the default.
+      if (dataRef.current.widgetMode) return;
 
       const k = evt.key;
       const keyL = evt.key.toLowerCase();

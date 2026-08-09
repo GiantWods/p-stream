@@ -92,7 +92,14 @@ export const SearchBarInput = forwardRef<HTMLInputElement, SearchBarProps>(
               onChange={(val) => setSearch(val)}
               value={props.value}
               className={c(
-                "w-full flex-1 bg-transparent !text-search-text focus:outline-none pr-2 transition-colors duration-300",
+                // The 28px radius lives on the wrapper, and this input fills
+                // it exactly -- same rect to the pixel. Without a matching
+                // radius of its own the keyboard focus ring (index.css) draws
+                // a square around the pill, since an outline follows the
+                // focused element's border-radius, not its parent's. The
+                // `focus:outline-none` stays: it is what keeps a *mouse* click
+                // from drawing the browser's own ring in here.
+                "w-full flex-1 bg-transparent !text-search-text focus:outline-none rounded-[28px] pr-2 transition-colors duration-300",
                 props.compact
                   ? "px-3 py-2 pl-10 text-sm"
                   : "px-4 py-4 pl-12 text-base",
@@ -126,20 +133,22 @@ export const SearchBarInput = forwardRef<HTMLInputElement, SearchBarProps>(
             )}
 
             {props.value.length > 0 && (
-              <div
+              <button
+                type="button"
+                title="Clear search"
                 onClick={() => {
                   props.onUnFocus("");
                   if (ref && typeof ref !== "function") {
                     ref.current?.focus();
                   }
                 }}
-                className="cursor-pointer hover:text-white  absolute bottom-0 right-2 top-0 flex justify-center my-auto h-10 w-10 items-center hover:bg-search-hoverBackground active:scale-110 text-search-icon rounded-full transition-[transform,background-color] duration-200"
+                className="tabbable cursor-pointer hover:text-white  absolute bottom-0 right-2 top-0 flex justify-center my-auto h-10 w-10 items-center hover:bg-search-hoverBackground active:scale-110 text-search-icon rounded-full transition-[transform,background-color] duration-200"
               >
                 <Icon
                   icon={Icons.X}
                   className="transition-colors duration-200"
                 />
-              </div>
+              </button>
             )}
           </Flare.Child>
         </Flare.Base>

@@ -77,10 +77,7 @@ function ToggleRow({
         ) : null}
         {notice ? (
           <div className="mt-1.5 flex items-start gap-2 text-xs text-type-secondary">
-            <Icon
-              icon={Icons.CIRCLE_EXCLAMATION}
-              className="mt-0.5 shrink-0"
-            />
+            <Icon icon={Icons.CIRCLE_EXCLAMATION} className="mt-0.5 shrink-0" />
             <span>{notice}</span>
           </div>
         ) : null}
@@ -221,15 +218,29 @@ function ThemePreview(props: {
 }) {
   const { t } = useTranslation();
 
+  // Same shape as a media card: a big preview plus small edit and delete
+  // buttons tucked under its corner, all inside one cell. A single column keeps
+  // sideways moving between themes and puts the two buttons below the preview,
+  // where they are. These are the three candidates `spatial.fixtures.test.ts`
+  // records as unreachable on Settings.
   return (
     <div
+      data-nav-grid="1"
       className={classNames(props.selector, "cursor-pointer group tabbable")}
       onClick={props.onClick}
     >
       {/* Little card thing */}
       <div
         tabIndex={0}
-        onKeyUp={(e) => e.key === "Enter" && e.currentTarget.click()}
+        // keydown and preventDefault, matching every other hand-rolled Enter
+        // handler in the app — see the note in LinksDropdown. Selecting a theme
+        // is idempotent so a double activation would not show here, but the
+        // rule is only useful if it holds everywhere.
+        onKeyDown={(e) => {
+          if (e.key !== "Enter" || e.repeat) return;
+          e.preventDefault();
+          e.currentTarget.click();
+        }}
         className={classNames(
           "tabbable scroll-mt-32 w-full h-32 relative rounded-lg border bg-gradient-to-br from-themePreview-primary/20 to-themePreview-secondary/10 bg-clip-content transition-colors duration-150",
           props.active

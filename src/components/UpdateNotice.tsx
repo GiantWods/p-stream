@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Icon, Icons } from "@/components/Icon";
+import { useNoticeStackTop } from "@/components/noticeStack";
 import { useAppUpdateCheck } from "@/hooks/useAppUpdateCheck";
 
 export function UpdateNotice() {
   const { t } = useTranslation();
   const { updateAvailable, dismiss } = useAppUpdateCheck();
   const [entered, setEntered] = useState(false);
+  const top = useNoticeStackTop(0);
 
   useEffect(() => {
     if (!updateAvailable) return;
@@ -30,7 +32,21 @@ export function UpdateNotice() {
   if (!updateAvailable) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[max(1.25rem,env(safe-area-inset-top))] z-[200] flex justify-center px-4">
+    <div
+      className="pointer-events-none fixed inset-x-0 z-[600] flex justify-center px-4"
+      style={{
+        // On the featured home page the search row now lives inside the nav
+        // (see feature/nav-layout) and paints at z-[500], directly under
+        // where this toast used to float at a flat 1.25rem from the top --
+        // z-[200] put it behind that row, not just visually close to it, so
+        // it was fully unclickable there rather than merely crowded. Clearing
+        // the navbar's height (see noticeStack.ts) puts it south of the row
+        // on every page instead of relying on z-index to fight over the same
+        // strip of screen; the z bump to 600 (still under every modal's
+        // 999+) is a second line of defence, not the fix itself.
+        top,
+      }}
+    >
       <div
         className={[
           "pointer-events-auto group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-white/10",

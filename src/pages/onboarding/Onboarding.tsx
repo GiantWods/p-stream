@@ -184,7 +184,13 @@ export function OnboardingPage() {
         </Paragraph>
 
         {/* Desktop Cards */}
-        <div className="hidden md:flex w-full flex-row gap-3 pb-6">
+        {/* data-nav-first, so a first-run remote starts on the recommended
+            option rather than on the "more info" link above it. */}
+        <div
+          data-nav-row
+          data-nav-first
+          className="hidden md:flex w-full flex-row gap-3 pb-6"
+        >
           <Card
             onClick={() => navigate("/onboarding/extension")}
             className="w-1/3"

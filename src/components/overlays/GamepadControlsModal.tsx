@@ -131,6 +131,14 @@ export function GamepadControlsModal({ id }: GamepadControlsModalProps) {
                 "Configure your Xbox or PlayStation controller button mappings",
               )}
             </p>
+            {/* The navigate actions used to be listed here as remappable no-ops.
+                They do something now, and the two mappings need saying. */}
+            <p className="text-type-secondary text-sm mt-2">
+              {t(
+                "settings.preferences.gamepadControlsNavigationNote",
+                "The D-pad moves focus around the app and Confirm activates whatever is focused. Inside the player the D-pad drives playback instead, so assign a spare button to Confirm if you want to reach the player's controls with the stick.",
+              )}
+            </p>
           </div>
 
           {/* Controller type toggle */}

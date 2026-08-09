@@ -267,9 +267,67 @@ input[type="range"].styled-slider.slider-progress::-ms-fill-lower {
   display: none !important;
 }
 
+/* Focus ring for keyboard, D-pad and gamepad users.
+ *
+ * One ring, one colour, on everything focusable.
+ *
+ * The colour is type.link -- the theme's own main colour, the one it uses for
+ * its logo and its links, and the most saturated colour each theme defines.
+ * This used to be themePreview.primary, which is the palette the theme-picker
+ * *swatches* in AppearancePart are drawn from, not a focus colour: in the
+ * default theme that is #080808 against a #030303 page, i.e. a black ring on
+ * a black background, and in most other themes it is a mid grey. The second
+ * colour (a themePreview.secondary glow) is gone with it.
+ *
+ * The element list matters as much as the colour. Only about 60 of the ~245
+ * focusable elements in the app carry .tabbable, and the rest were falling
+ * through to Chromium's own `outline: auto` ring -- a white-and-dark double
+ * ring whose colour the browser re-picks per backdrop, so tabbing across one
+ * visual row flipped between that and the near-invisible black one. Listing
+ * the natively focusable elements here is what makes the ring uniform;
+ * .tabbable stays in the list for the handful of divs that opt in.
+ *
+ * Written out longhand rather than with :is(), which needs Chromium 88 -- the
+ * TV floor is 76 (Tizen 6.0) / 79 (webOS 6.0), and one unparseable selector
+ * drops the whole rule and leaves those users with no ring at all.
+ *
+ * The `html[...]` prefix is load-bearing beyond scoping: it puts this rule at
+ * a higher specificity than Tailwind's `focus:outline-none` (0,2,0), which a
+ * bare `button:focus-visible` (0,1,1) would lose to. Several inputs set that
+ * utility and so had no visible focus at all -- the search bar included.
+ *
+ * Paired with the :focus-visible rule below rather than replacing it, for two
+ * reasons. :focus-visible needs Chromium 86 and the TV floor is 76 (Tizen 6.0)
+ * / 79 (webOS 6.0) -- there the whole rule fails to parse and is dropped, so
+ * TV users get no ring at all. And :focus-visible also fires for a
+ * mouse-clicked text input, which several .tabbable inputs rely on; dropping
+ * it would quietly take that ring away.
+ *
+ * The attribute is maintained by src/utils/browser/inputModality.ts. */
+html[data-input-modality="key"] a[href]:focus,
+html[data-input-modality="key"] area[href]:focus,
+html[data-input-modality="key"] button:focus,
+html[data-input-modality="key"] input:focus,
+html[data-input-modality="key"] select:focus,
+html[data-input-modality="key"] textarea:focus,
+html[data-input-modality="key"] summary:focus,
+html[data-input-modality="key"] [contenteditable]:focus,
+html[data-input-modality="key"] [tabindex="0"]:focus,
+html[data-input-modality="key"] .tabbable:focus {
+  outline: 2px solid theme("colors.type.link");
+  /* Declared, not left to cascade: elements carrying `focus:outline-none`
+   * bring that utility's own `outline-offset: 2px` along with them, so
+   * leaving this out would ring most things at 0 and those few at 2. */
+  outline-offset: 2px;
+}
+
+/* Deliberately still limited to .tabbable, unlike the rule above. This one
+ * also matches a *mouse* click on a text input, and widening it to every
+ * input would draw a ring inside the search pill the moment someone clicked
+ * it. Keyboard users are covered by the rule above on every element. */
 .tabbable:focus-visible {
-  outline: 2px solid theme("colors.themePreview.primary");
-  box-shadow: 0 0 10px theme("colors.themePreview.secondary");
+  outline: 2px solid theme("colors.type.link");
+  outline-offset: 2px;
 }
 
 [dir="rtl"] .transform {
