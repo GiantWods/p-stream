@@ -501,6 +501,85 @@ describe("moveFocus with container hints", () => {
   });
 });
 
+/**
+ * The layer split, reproduced at the rects the browser actually reported.
+ *
+ * A fixed nav bar owns y 0–86. `scrollIntoViewport` used to leave a focused card
+ * at y 24, so the card and the bar shared a y band; the row above was off screen
+ * and 130px away, the bar 24px away and also overlapping — which §8.4 reads as
+ * containment and resolves without consulting distance at all. Both readings are
+ * correct about the rects they were given. The rects are the problem: they
+ * describe two layers as if they were one.
+ */
+describe("moveFocus across positioning layers", () => {
+  function bar(...children: HTMLElement[]) {
+    const el = document.createElement("div");
+    el.setAttribute("data-nav-obstruct", "");
+    place(el, 0, 0, 1000, 86);
+    el.append(...children);
+    return el;
+  }
+
+  it("goes to the row above rather than into the chrome overlapping it", () => {
+    // Overlapping the card by 40px across and 39 down, as the nav bar's
+    // rightmost button overlapped a card the browser reported at x 1566–1762.
+    const chromeButton = button("chrome", 250, 23, 40, 40);
+    const above = button("above", 100, -100, 200, 80);
+    const card = button("card", 100, 24, 200, 349);
+    document.body.append(bar(chromeButton), above, card);
+    card.focus();
+
+    expect(moveFocus("up")).toBe(true);
+    expect(document.activeElement).toBe(above);
+  });
+
+  it("still reaches the chrome once the page has nothing left above", () => {
+    const chromeButton = button("chrome", 400, 23, 40, 40);
+    const card = button("card", 100, 200, 200, 349);
+    document.body.append(bar(chromeButton), card);
+    card.focus();
+
+    expect(moveFocus("up")).toBe(true);
+    expect(document.activeElement).toBe(chromeButton);
+  });
+
+  // Otherwise the bar would be a trap: everything in the page below it is in a
+  // different layer, and the bar's own items are all beside each other.
+  it("leaves the chrome downwards into the page", () => {
+    const chromeButton = button("chrome", 100, 23, 40, 40);
+    const card = button("card", 100, 200, 200, 349);
+    document.body.append(bar(chromeButton), card);
+    chromeButton.focus();
+
+    expect(moveFocus("down")).toBe(true);
+    expect(document.activeElement).toBe(card);
+  });
+
+  it("prefers a sibling inside the chrome to the page behind it", () => {
+    const one = button("one", 100, 23, 40, 40);
+    const two = button("two", 200, 23, 40, 40);
+    const card = button("card", 300, 24, 200, 349);
+    document.body.append(bar(one, two), card);
+    one.focus();
+
+    expect(moveFocus("right")).toBe(true);
+    expect(document.activeElement).toBe(two);
+  });
+
+  it("changes nothing on a page with no marked chrome", () => {
+    const above = button("above", 100, -100, 200, 80);
+    const overlapping = button("overlapping", 250, 23, 40, 40);
+    const card = button("card", 100, 24, 200, 349);
+    document.body.append(overlapping, above, card);
+    card.focus();
+
+    // Same rects as the first case, and the old answer: an overlapping
+    // candidate in the same layer is the nesting case §8.4's first pass is for.
+    expect(moveFocus("up")).toBe(true);
+    expect(document.activeElement).toBe(overlapping);
+  });
+});
+
 describe("handleNavigationKeydown", () => {
   function pressOn(el: HTMLElement, key: string, init: KeyboardEventInit = {}) {
     const event = keydown(key, init);
@@ -571,11 +650,29 @@ describe("handleNavigationKeydown", () => {
     const target = button("target", 0, 180);
     document.body.append(select, range, text, target);
 
-    for (const el of [select, range, text]) {
+    for (const el of [select, range]) {
       el.focus();
       expect(pressOn(el, "ArrowDown").taken).toBe(false);
       expect(document.activeElement).toBe(el);
     }
+
+    // A text field owns the caret keys and nothing else.
+    text.focus();
+    expect(pressOn(text, "ArrowLeft").taken).toBe(false);
+    expect(document.activeElement).toBe(text);
+  });
+
+  // Otherwise arrowing up into the search bar ends the session: the field takes
+  // all four keys and a remote has nothing left to press but Back.
+  it("moves off a single-line field vertically", () => {
+    const text = document.createElement("input");
+    place(text, 0, 0);
+    const target = button("target", 0, 60);
+    document.body.append(text, target);
+    text.focus();
+
+    expect(pressOn(text, "ArrowDown").taken).toBe(true);
+    expect(document.activeElement).toBe(target);
   });
 
   // The other half of that call. A checkbox does not mean anything by an

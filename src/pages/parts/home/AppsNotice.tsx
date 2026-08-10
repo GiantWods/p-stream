@@ -43,7 +43,10 @@ export function AppsNotice() {
   if (!visible) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[calc(max(1.25rem,env(safe-area-inset-top))_+_9.25rem)] z-[198] flex justify-center px-4">
+    <div
+      data-nav-obstruct
+      className="pointer-events-none fixed inset-x-0 top-[calc(max(1.25rem,env(safe-area-inset-top))_+_9.25rem)] z-[198] flex justify-center px-4"
+    >
       <div
         className={[
           "pointer-events-auto group relative flex items-center gap-3 overflow-hidden rounded-2xl border border-white/10",

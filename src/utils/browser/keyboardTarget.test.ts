@@ -129,6 +129,35 @@ describe("ownsArrowKeys", () => {
     expect(ownsArrowKeys(null)).toBe(false);
   });
 
+  // ← and → move the caret through the value; ↑ and ↓ have nothing to move it
+  // to. Keeping all four is what strands a remote in the search bar.
+  it("gives up and down back from a single-line field", () => {
+    const input = mount('<input type="search" />');
+    expect(ownsArrowKeys(input, "horizontal")).toBe(true);
+    expect(ownsArrowKeys(input, "vertical")).toBe(false);
+  });
+
+  it("keeps all four where up and down really move a caret", () => {
+    for (const html of [
+      "<textarea></textarea>",
+      '<div contenteditable="true"></div>',
+      '<div role="textbox"></div>',
+    ]) {
+      expect(ownsArrowKeys(mount(html), "vertical")).toBe(true);
+    }
+  });
+
+  // These drive a value by ↑↓ rather than a caret, so the axis changes nothing.
+  it("keeps all four on controls the arrows drive the value of", () => {
+    expect(ownsArrowKeys(mount("<select></select>"), "vertical")).toBe(true);
+    expect(ownsArrowKeys(mount('<input type="range" />'), "vertical")).toBe(
+      true,
+    );
+    expect(ownsArrowKeys(mount('<input type="number" />'), "vertical")).toBe(
+      true,
+    );
+  });
+
   it("sits strictly between the other two predicates", () => {
     const checkbox = mount('<input type="checkbox" />');
     expect(isEditableTarget(checkbox)).toBe(false);

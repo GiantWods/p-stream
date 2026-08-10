@@ -318,7 +318,14 @@ export function Navigation(props: NavigationProps) {
           top: `${bannerHeight}px`,
         }}
       >
-        <div className={classNames("fixed left-0 right-0 flex items-center")}>
+        {/* data-nav-obstruct: the bar owns this band of the viewport whatever
+            the page underneath it is doing, so directional navigation neither
+            leaves a focused element parked beneath it nor treats a card that
+            shares its y band as being next to it. */}
+        <div
+          data-nav-obstruct
+          className={classNames("fixed left-0 right-0 flex items-center")}
+        >
           {/* The bar is fixed, so once the page scrolls it sits on top of
               content that shares its y band -- and left/right geometry has no
               way to tell the two apart. Marking it a row keeps horizontal moves

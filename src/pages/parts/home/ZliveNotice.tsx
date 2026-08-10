@@ -46,6 +46,7 @@ export function ZliveNotice() {
 
   return (
     <div
+      data-nav-obstruct
       className="pointer-events-none fixed inset-x-0 z-[599] flex justify-center px-4"
       style={{ top }}
     >

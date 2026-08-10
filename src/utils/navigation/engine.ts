@@ -26,6 +26,7 @@ import {
   stepInDocumentOrder,
   stepInGrid,
 } from "./containers";
+import { layerOf } from "./obstructions";
 import { scrollIntoViewport } from "./scrollIntoViewport";
 import { Direction, NavRect, pickCandidate } from "./spatial";
 
@@ -95,12 +96,20 @@ export function collectNavigationCandidates(
  * `preventScroll` because the scroll is ours to do: see `scrollIntoViewport`,
  * which moves the minimum instead of re-centring every ancestor the way the
  * browser would.
+ *
+ * `direction` is what the move was, and only affects which side of the element
+ * the scroll leaves room on. Callers that are placing focus rather than moving it
+ * — a route entry point, focus recovery — have no direction and want the
+ * symmetric margin they get by leaving it out.
  */
-export function focusCandidate(el: HTMLElement): boolean {
+export function focusCandidate(
+  el: HTMLElement,
+  direction?: Direction,
+): boolean {
   el.focus({ preventScroll: true });
   if (document.activeElement !== el) return false;
   rememberDescendant(el);
-  scrollIntoViewport(el);
+  scrollIntoViewport(el, direction);
   return true;
 }
 
@@ -183,8 +192,10 @@ function pickInside(
  *    the move, and anything else is escaped past — with its descendants removed
  *    from the tiers below, which is what "escape to the container's siblings"
  *    has to mean if it is to mean anything.
- * 2. **The whole search root** — plain B1 geometry, and on an unannotated page
- *    the only tier that runs. This is exactly what B2 shipped.
+ * 2. **The whole search root** — plain geometry, and on an unannotated page the
+ *    only tier that runs. Split by positioning layer: the candidates sharing the
+ *    origin's `data-nav-obstruct` ancestor are resolved first, and the rest only
+ *    if that found nothing. See the comment at the tier itself.
  * 3. **Document order**, and only if a container was escaped in tier 1.
  *    Containment is the one thing here that can strand focus, so it pays for its
  *    own escape hatch; a page with no hints keeps falling through to native
@@ -221,7 +232,7 @@ export function moveFocus(direction: Direction): boolean {
   const commit = (target: HTMLElement): boolean => {
     const entry = resolveEntry(active, target, candidates);
     if (entry === active) return false;
-    return focusCandidate(entry);
+    return focusCandidate(entry, direction);
   };
 
   // Tier 1. `escaped` is subtracted from every later tier: a container we have
@@ -255,13 +266,31 @@ export function moveFocus(direction: Direction): boolean {
     escaped.push(container.el);
   }
 
-  // Tier 2.
+  // Tier 2, in two takes: the layer focus is already in, then everything else.
+  //
+  // Splitting it is what stops a vertical move ending up in the nav bar. The bar
+  // is `fixed`, so a scrolled page puts it in the same y band as a card, and from
+  // there it is both overlapping the origin — which §8.4 reads as containment and
+  // resolves without consulting distance at all — and closer than the row above,
+  // which is off screen. Neither reading is wrong about the rects it was given;
+  // the rects are describing two layers as if they were one.
+  //
+  // The second take is what keeps the bar reachable rather than merely losing:
+  // the page runs out of candidates in the direction being travelled exactly at
+  // its top edge, which is where up into the chrome is the move the user meant.
   const outside =
     escaped.length === 0 ? candidates : candidates.filter(survives);
-  if (outside.length > 0) {
-    const index = pickCandidate(originRect, outside.map(rectOf), direction);
-    if (index !== null && outside[index] !== active) {
-      return commit(outside[index]);
+  const ownLayer = layerOf(active);
+  const takes: HTMLElement[][] = [[], []];
+  for (let i = 0; i < outside.length; i += 1) {
+    takes[layerOf(outside[i]) === ownLayer ? 0 : 1].push(outside[i]);
+  }
+  for (let take = 0; take < takes.length; take += 1) {
+    const tier = takes[take];
+    if (tier.length === 0) continue;
+    const index = pickCandidate(originRect, tier.map(rectOf), direction);
+    if (index !== null && tier[index] !== active) {
+      return commit(tier[index]);
     }
   }
 
@@ -284,6 +313,8 @@ export function moveFocus(direction: Direction): boolean {
  *    sees the event.
  * 2. A direction, unmodified.
  * 3. {@link ownsArrowKeys} — the control means something by this key itself.
+ *    Asked per axis, so ↑ and ↓ still leave a single-line text field: nothing in
+ *    it moves by them, and swallowing them strands a remote in the search bar.
  * 4. Dormant unless activation says otherwise. Checked after the cheap tests
  *    so a disabled engine costs a property read per arrow press.
  */
@@ -296,7 +327,9 @@ export function handleNavigationKeydown(
   const direction = directionForKey(event);
   if (direction === null) return false;
 
-  if (ownsArrowKeys(event.target)) return false;
+  const axis =
+    direction === "left" || direction === "right" ? "horizontal" : "vertical";
+  if (ownsArrowKeys(event.target, axis)) return false;
   if (!isEnabled()) return false;
 
   if (!moveFocus(direction)) return false;

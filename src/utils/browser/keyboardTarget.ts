@@ -80,6 +80,9 @@ const ARROW_DRIVEN_INPUT_TYPES = [
   "week",
 ];
 
+/** Which pair of arrows is being asked about. */
+export type ArrowAxis = "horizontal" | "vertical";
+
 /**
  * True when the target consumes the arrow keys itself.
  *
@@ -98,8 +101,19 @@ const ARROW_DRIVEN_INPUT_TYPES = [
  * does this element already mean something by ↑↓←→? Checkboxes, radios and
  * buttons do not and stay navigable; text fields do, because the arrows move
  * the caret.
+ *
+ * `axis` narrows that to the pair actually pressed, and the reason is the same
+ * "stranded is worse" argument one paragraph up. A single-line text field is the
+ * one control here that owns half the arrows: ← and → move the caret through the
+ * value, and ↑ and ↓ have nothing to move it to. Without the distinction,
+ * arrowing up into the search bar is the end of the session for anyone holding a
+ * remote — the field swallows all four keys and only Back gets out. Multi-line
+ * editing keeps all four, because there ↑ and ↓ really do move the caret.
  */
-export function ownsArrowKeys(target: EventTarget | null): boolean {
+export function ownsArrowKeys(
+  target: EventTarget | null,
+  axis?: ArrowAxis,
+): boolean {
   const el = asElement(target);
   if (el === null) return false;
   if (el.nodeName === "SELECT") return true;
@@ -109,7 +123,9 @@ export function ownsArrowKeys(target: EventTarget | null): boolean {
   ) {
     return true;
   }
-  return isEditableElement(el);
+  if (!isEditableElement(el)) return false;
+  if (axis !== "vertical") return true;
+  return el.nodeName !== "INPUT";
 }
 
 /**

@@ -102,10 +102,16 @@ export function HeroPart({
                 onFixedToggle={stickStateChanged}
                 scrollElement="window"
               >
-                <HomeSearchRow
-                  searchParams={searchParams}
-                  isSticky={showBg}
-                />
+                {/* Marked only while pinned: react-sticky-el goes
+                    `position: fixed`, and from there the row owns a band of the
+                    viewport the same way the nav bar does. Unpinned it is
+                    ordinary page content and must not read as chrome. */}
+                <div data-nav-obstruct={showBg ? "" : undefined}>
+                  <HomeSearchRow
+                    searchParams={searchParams}
+                    isSticky={showBg}
+                  />
+                </div>
               </Sticky>
             </div>
           </div>

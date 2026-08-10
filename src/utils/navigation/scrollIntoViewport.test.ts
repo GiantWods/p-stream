@@ -91,6 +91,22 @@ describe("scrollDelta", () => {
     expect(scrollDelta(300, 340, 300, 800, MARGIN)).toBe(-24);
     expect(scrollDelta(760, 800, 300, 800, MARGIN)).toBe(24);
   });
+
+  it("keeps the asymmetric margin it is given clear of each edge", () => {
+    // A 200px band at the trailing edge: bottom 500 against a usable 300.
+    expect(scrollDelta(450, 500, 0, 500, MARGIN, 200)).toBe(200);
+    // And nothing at all at the leading edge it is travelling away from.
+    expect(scrollDelta(30, 80, 0, 500, MARGIN, 200)).toBe(0);
+  });
+
+  // The band exists to show what is coming next. Enforcing it on something that
+  // does not fit inside it would push the element itself off the far edge, which
+  // is the opposite of the point.
+  it("drops the band for an element too big to fit inside it", () => {
+    // 400 tall in 500 of bounds: the 200px band cannot be honoured, so this is
+    // the plain 24px answer.
+    expect(scrollDelta(150, 550, 0, 500, MARGIN, 200)).toBe(74);
+  });
 });
 
 describe("scrollIntoViewport", () => {
@@ -148,6 +164,72 @@ describe("scrollIntoViewport", () => {
       0,
       scrollDelta(2000, 2100, 0, window.innerHeight, MARGIN),
     );
+  });
+
+  // The reported bug: 24px from the top of a page whose nav bar owns the first
+  // 86px of it is 62px underneath the nav bar.
+  it("stops short of the chrome instead of parking focus beneath it", () => {
+    const bar = document.createElement("div");
+    bar.setAttribute("data-nav-obstruct", "");
+    place(bar, 0, 0, window.innerWidth, 86);
+    const item = place(document.createElement("button"), 100, 40, 200, 100);
+    document.body.append(bar, item);
+
+    scrollIntoViewport(item);
+
+    // Top at 40 against a usable edge of 86 + 24.
+    expect(window.scrollBy).toHaveBeenCalledWith(0, -70);
+  });
+
+  it("leaves a band ahead of the element along the axis being travelled", () => {
+    const item = place(document.createElement("button"), 100, 700, 200, 100);
+    document.body.append(item);
+
+    scrollIntoViewport(item, "down");
+
+    // A quarter of the viewport kept clear below, rather than 24px.
+    const band = window.innerHeight * 0.25;
+    expect(window.scrollBy).toHaveBeenCalledWith(
+      0,
+      800 - (window.innerHeight - band),
+    );
+  });
+
+  it("leaves it on the other side when travelling the other way", () => {
+    const item = place(document.createElement("button"), 100, 40, 200, 100);
+    document.body.append(item);
+
+    scrollIntoViewport(item, "up");
+
+    expect(window.scrollBy).toHaveBeenCalledWith(
+      0,
+      40 - window.innerHeight * 0.25,
+    );
+  });
+
+  // Lookahead on the axis you are not travelling along would move the page
+  // sideways for a vertical keypress.
+  it("keeps the orthogonal axis on the minimum", () => {
+    const item = place(document.createElement("button"), 900, 700, 200, 100);
+    document.body.append(item);
+
+    scrollIntoViewport(item, "down");
+
+    const [dx] = (window.scrollBy as unknown as ReturnType<typeof vi.fn>).mock
+      .calls[0];
+    expect(dx).toBe(scrollDelta(900, 1100, 0, window.innerWidth, MARGIN));
+  });
+
+  it("gives a carousel the same lookahead sideways", () => {
+    const carousel = scroller("x", 0, 200, 1000, 300, 4000);
+    const item = place(document.createElement("button"), 900, 220, 200, 260);
+    carousel.append(item);
+    document.body.append(carousel);
+
+    scrollIntoViewport(item, "right");
+
+    // Right edge at 1100 against a usable edge of 1000 - 250.
+    expect(carousel.scrollLeft).toBe(350);
   });
 
   it("adjusts each axis on its own", () => {
