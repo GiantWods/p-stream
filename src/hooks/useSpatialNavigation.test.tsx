@@ -64,6 +64,23 @@ async function nextFrame() {
   });
 }
 
+/**
+ * Waits out the route entry point's retry window.
+ *
+ * It re-attempts every frame for `ENTRY_DEADLINE_MS` after a route arrives, and
+ * while it is still running it puts focus back on the page by itself. That is
+ * indistinguishable from recovery working — measured: the recovery tests below
+ * passed with the recovery code disabled — so anything about a *later* focus
+ * loss has to start after this window has closed.
+ */
+async function pastRouteEntry() {
+  await act(async () => {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 600);
+    });
+  });
+}
+
 function unmount() {
   act(() => {
     root?.unmount();
@@ -129,6 +146,7 @@ describe("useSpatialNavigation", () => {
   it("attaches no listeners at all while dormant", () => {
     const onWindow = vi.spyOn(window, "addEventListener");
     const onDocument = vi.spyOn(document, "addEventListener");
+    const observe = vi.spyOn(MutationObserver.prototype, "observe");
     mount();
 
     expect(onWindow.mock.calls.filter(([type]) => type === "keydown")).toEqual(
@@ -139,6 +157,9 @@ describe("useSpatialNavigation", () => {
         ["keydown", "focusout", "focusin"].includes(type as string),
       ),
     ).toEqual([]);
+    // Recovery watches the DOM for the focused element being removed, which is
+    // the one part of this that costs something on every mutation in the app.
+    expect(observe).not.toHaveBeenCalled();
   });
 
   it("navigates once the preference is on", () => {
@@ -341,11 +362,33 @@ describe("route entry and focus recovery, wired up", () => {
   it("recovers focus when the focused element is destroyed", async () => {
     usePreferencesStore.setState({ spatialNavigation: "on" });
     mount();
+    await pastRouteEntry();
     first.focus();
 
     first.remove();
 
     await nextFrame();
+
+    expect(document.activeElement).toBe(second);
+  });
+
+  // The reported bug, and the reason a second signal exists. Chrome fires no
+  // focus event when the focused element is simply removed — the settings save
+  // bar closing under its own Save button — so a handler waiting for one waits
+  // forever and the user has to Tab back into the page. Suppressing focusout is
+  // how that browser behaviour is reproduced here; jsdom does fire it.
+  it("recovers focus when the element vanishes with no focusout", async () => {
+    usePreferencesStore.setState({ spatialNavigation: "on" });
+    mount();
+    await pastRouteEntry();
+    first.focus();
+    const swallow = (event: Event) => event.stopImmediatePropagation();
+    document.addEventListener("focusout", swallow, true);
+
+    first.remove();
+    await nextFrame();
+    await nextFrame();
+    document.removeEventListener("focusout", swallow, true);
 
     expect(document.activeElement).toBe(second);
   });

@@ -1,6 +1,11 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  getInputModality,
+  initInputModality,
+} from "@/utils/browser/inputModality";
+
 import { recoverFocus, rememberFocus } from "./recovery";
 
 /** jsdom has no layout, and `collectFocusables` rejects zero-sized elements. */
@@ -41,15 +46,27 @@ function main() {
   return el;
 }
 
+// The modality module keeps its state in a module variable, and its teardown is
+// the only thing that resets it. Mounted per test so a "pointer" left behind by
+// one cannot decide the outcome of the next.
+let endModality: () => void;
+
 beforeEach(() => {
   document.body.innerHTML = "";
   vi.spyOn(window, "scrollBy").mockImplementation(() => {});
+  endModality = initInputModality();
 });
 
 afterEach(() => {
+  endModality();
   document.body.innerHTML = "";
   vi.restoreAllMocks();
 });
+
+/** The state a mouse click leaves behind: focus rings off. */
+function clickedWithAPointer() {
+  document.dispatchEvent(new Event("pointerdown"));
+}
 
 describe("rememberFocus", () => {
   it("records the ancestors while they still reach the document", () => {
@@ -174,6 +191,39 @@ describe("recoverFocus", () => {
 
     expect(recoverFocus(origin)).toBe(true);
     expect(document.activeElement).toBe(outside);
+  });
+
+  // The settings Save bar: the button that was clicked is the button that goes
+  // away, so the ring still reads "pointer" and the recovered control renders no
+  // outline at all. Landing focus somewhere nobody can see is the same bug as
+  // not landing it.
+  it("turns the ring on, so the recovered control is visible", () => {
+    const root = main();
+    const a = card("a", 0, 0);
+    const b = card("b", 120, 0);
+    root.append(a.wrapper, b.wrapper);
+
+    a.el.focus();
+    const origin = rememberFocus(a.el);
+    clickedWithAPointer();
+    a.wrapper.remove();
+
+    expect(recoverFocus(origin)).toBe(true);
+    expect(document.activeElement).toBe(b.el);
+    expect(getInputModality()).toBe("key");
+  });
+
+  it("leaves the ring alone when focus did not move", () => {
+    const root = main();
+    const a = card("a", 0, 0);
+    root.appendChild(a.wrapper);
+
+    a.el.focus();
+    const origin = rememberFocus(a.el);
+    clickedWithAPointer();
+
+    expect(recoverFocus(origin)).toBe(false);
+    expect(getInputModality()).toBe("pointer");
   });
 
   it("returns false on a page with nothing left to focus", () => {

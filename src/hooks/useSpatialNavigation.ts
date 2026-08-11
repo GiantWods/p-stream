@@ -41,6 +41,21 @@ import {
 const ENTRY_DEADLINE_MS = 500;
 
 /**
+ * What is focused right now, for recovery to measure a disappearance against.
+ *
+ * Needed because `focusin` only reports focus *changing*: an element that was
+ * already focused when the engine started — someone turns the preference on, or
+ * picks up a controller — would never be announced, and its removal would go
+ * unnoticed.
+ */
+function focusedOrigin(): FocusOrigin | null {
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement)) return null;
+  if (needsEntryPoint() || isNavSkipped(active)) return null;
+  return rememberFocus(active);
+}
+
+/**
  * Whether directional navigation should be running at all.
  *
  * The stored preference is the gate for everyone who has a choice, and it is
@@ -139,22 +154,36 @@ export function useSpatialNavigation() {
     };
   }, [enabled, getTopModal]);
 
-  // Focus recovery. `focusout` fires while the outgoing element is still
-  // connected, which is the only moment its position in the tree can be read;
-  // whether it survives is a question for the next frame.
+  // Focus recovery, from two signals, because neither one covers it alone.
+  //
+  // `focusout` catches focus *moving*, while the outgoing element is still
+  // connected — the only moment its position in the tree can be read. What it
+  // does not reliably catch is focus being destroyed. Removing the focused
+  // element is not required to report anything: jsdom names `<body>` as the
+  // target rather than the element that left, and where a browser does name the
+  // element it can arrive a frame or more before the node is actually detached,
+  // which reads as "it survived". The settings save bar closing under its own
+  // Save button is that case, and it left focus on `<body>`.
+  //
+  // So the removal is watched for directly as well, against a snapshot taken on
+  // the way in. That signal has no timing to get wrong: it fires when the node
+  // leaves the document, which is exactly the question being asked.
   useEffect(() => {
     if (!enabled) return;
+    // Where focus is now, read while it is still readable. Afterwards the
+    // element cannot answer where it was — see `recovery.ts`.
+    let current: FocusOrigin | null = focusedOrigin();
+    // The origin whose survival the next frame has to judge.
+    let pending: FocusOrigin | null = null;
     let frame: number | null = null;
 
-    const onFocusOut = (event: FocusEvent) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
-      if (isNavSkipped(target)) return;
-
-      const origin: FocusOrigin = rememberFocus(target);
+    const check = () => {
       if (frame !== null) cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         frame = null;
+        const origin = pending;
+        pending = null;
+        if (origin === null) return;
         // Focus moved somewhere real — a normal Tab press, or a click. Only an
         // element that vanished leaves it on `<body>`.
         if (!needsEntryPoint()) return;
@@ -162,8 +191,36 @@ export function useSpatialNavigation() {
       });
     };
 
+    const onFocusIn = (event: FocusEvent) => {
+      const target = event.target;
+      const usable = target instanceof HTMLElement && !isNavSkipped(target);
+      current = usable ? rememberFocus(target as HTMLElement) : null;
+    };
+
+    const onFocusOut = (event: FocusEvent) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (isNavSkipped(target)) return;
+
+      pending = rememberFocus(target);
+      check();
+    };
+
+    // Every mutation in the app runs this, so it stays two reads long: a focus
+    // that is still in the tree is the answer almost every time.
+    const observer = new MutationObserver(() => {
+      if (current === null || current.el.isConnected) return;
+      pending = current;
+      current = null;
+      check();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    document.addEventListener("focusin", onFocusIn);
     document.addEventListener("focusout", onFocusOut);
     return () => {
+      observer.disconnect();
+      document.removeEventListener("focusin", onFocusIn);
       document.removeEventListener("focusout", onFocusOut);
       if (frame !== null) cancelAnimationFrame(frame);
     };
