@@ -13,6 +13,7 @@ import {
   BackContext,
 } from "@/utils/navigation/back";
 import { rememberDescendant } from "@/utils/navigation/containers";
+import { handleDropdownKeydown } from "@/utils/navigation/dropdown";
 import {
   handleNavigationKeydown,
   isNavSkipped,
@@ -90,11 +91,16 @@ export function useSpatialNavigation() {
       handleNavigationKeydown(event, isEnabled);
     };
 
-    // What the bubble phase will not be able to see any more: the global
-    // Escape handler is registered before this one and has already emptied the
-    // modal stack by then. See `back.ts`.
+    // Two things that are only answerable before the event reaches React.
+    //
+    // The back context is what the bubble phase will not be able to see any
+    // more: the global Escape handler is registered before this one and has
+    // already emptied the modal stack by then. See `back.ts`. A dropdown's
+    // arrow keys are the same problem one layer down — Headless UI opens the
+    // menu from a React prop, so by the bubble phase it is already open.
     let backContext: BackContext = snapshotBackContext(false);
     const onCaptureKeyDown = (event: KeyboardEvent) => {
+      if (handleDropdownKeydown(event, isEnabled)) return;
       if (isBackKey(event)) {
         backContext = snapshotBackContext(getTopModal() !== null);
       }

@@ -243,21 +243,33 @@ describe("back, wired up", () => {
     window.history.pushState({ idx: 1 }, "");
   });
 
-  it("goes back on Escape with nothing on screen to close", () => {
+  it("goes back on the back button with nothing on screen to close", () => {
+    const back = watchBack();
+    usePreferencesStore.setState({ spatialNavigation: "on" });
+    mount();
+
+    press(first, "Unidentified", { keyCode: 10009 });
+
+    expect(back).toHaveBeenCalledTimes(1);
+  });
+
+  // Escape dismisses; it does not navigate. Wired the other way, Escape on a page
+  // reached from a movie reopened the movie.
+  it("does not go back on the Escape key", () => {
     const back = watchBack();
     usePreferencesStore.setState({ spatialNavigation: "on" });
     mount();
 
     press(first, "Escape");
 
-    expect(back).toHaveBeenCalledTimes(1);
+    expect(back).not.toHaveBeenCalled();
   });
 
-  it("does not go back on Escape while dormant", () => {
+  it("does not go back on the back button while dormant", () => {
     const back = watchBack();
     mount();
 
-    press(first, "Escape");
+    press(first, "Unidentified", { keyCode: 10009 });
 
     expect(back).not.toHaveBeenCalled();
   });

@@ -656,7 +656,11 @@ describe("handleNavigationKeydown", () => {
       expect(document.activeElement).toBe(el);
     }
 
-    // A text field owns the caret keys and nothing else.
+    // A text field owns a caret key while the caret has somewhere to go. Given a
+    // value and a mid-string caret, or the press would be unclaimed anyway for
+    // want of anything to the left of it.
+    text.value = "abc";
+    text.setSelectionRange(1, 1);
     text.focus();
     expect(pressOn(text, "ArrowLeft").taken).toBe(false);
     expect(document.activeElement).toBe(text);
@@ -673,6 +677,26 @@ describe("handleNavigationKeydown", () => {
 
     expect(pressOn(text, "ArrowDown").taken).toBe(true);
     expect(document.activeElement).toBe(target);
+  });
+
+  // And sideways once the caret runs out of value, which is the state an empty
+  // search box is always in — the one the reported bug was about.
+  it("moves sideways off a field whose caret has nowhere left to go", () => {
+    const text = document.createElement("input");
+    place(text, 0, 0);
+    const beside = button("beside", 200, 0);
+    document.body.append(text, beside);
+
+    text.focus();
+    expect(pressOn(text, "ArrowRight").taken).toBe(true);
+    expect(document.activeElement).toBe(beside);
+
+    // But not while there is still value to walk through.
+    text.value = "abc";
+    text.setSelectionRange(0, 0);
+    text.focus();
+    expect(pressOn(text, "ArrowRight").taken).toBe(false);
+    expect(document.activeElement).toBe(text);
   });
 
   // The other half of that call. A checkbox does not mean anything by an

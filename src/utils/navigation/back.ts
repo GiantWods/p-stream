@@ -15,6 +15,7 @@
  */
 
 import { getScopeDepth } from "@/utils/browser/focusScopes";
+import { isTvBrowser } from "@/utils/browser/tvBrowser";
 
 /**
  * TV back-key codes, from `src/tv/platform/keymap.ts` (Tizen 10009, webOS 461).
@@ -26,9 +27,40 @@ import { getScopeDepth } from "@/utils/browser/focusScopes";
  */
 const BACK_KEY_CODES = [10009, 461];
 
+/**
+ * The code a synthesized Back press carries so it reads as a real Back button.
+ *
+ * A gamepad's B is a Back button and wants the whole behaviour; the Escape key on
+ * a keyboard is not one and wants only half of it. See {@link isRouteBackKey}.
+ */
+export const BACK_KEY_CODE = BACK_KEY_CODES[0];
+
 export function isBackKey(event: KeyboardEvent): boolean {
   if (event.key === "Escape") return true;
   return BACK_KEY_CODES.indexOf(event.keyCode) !== -1;
+}
+
+/**
+ * Whether this press is a Back *button* rather than the Escape key.
+ *
+ * Both close what is open, and only a Back button also leaves the page. On a
+ * remote or a controller, Back is the only way out of anywhere and going back a
+ * route is exactly what the user asked for. Escape is not that key: on a keyboard
+ * it means "dismiss this", and a page with nothing to dismiss should stay where it
+ * is. Making them the same thing meant Escape on any ordinary page navigated to
+ * whatever the user had visited before it — from a page reached via a movie, it
+ * reopened the movie.
+ *
+ * A television is the exception, and it is not a hedge: there is no keyboard on
+ * one, so an Escape that arrives there came from the remote by definition. The
+ * dedicated Tizen and webOS buttons report a code and are recognised anywhere, but
+ * a TV browser that synthesizes a plain Escape instead would otherwise leave the
+ * user with no way back at all.
+ */
+export function isRouteBackKey(event: KeyboardEvent): boolean {
+  if (!isBackKey(event)) return false;
+  if (BACK_KEY_CODES.indexOf(event.keyCode) !== -1) return true;
+  return isTvBrowser();
 }
 
 export type BackAction =
@@ -81,6 +113,10 @@ export function resolveBack(
   // overlay mid-transition. Neither is ours to close, and neither is a good
   // moment to change route.
   if (getScopeDepth() > 0) return "none";
+
+  // Everything above is "is there something on screen to close", and Escape gets
+  // all of it. Only leaving the page is reserved for a real Back button.
+  if (!isRouteBackKey(event)) return "none";
 
   return canGoBack() ? "history" : "none";
 }

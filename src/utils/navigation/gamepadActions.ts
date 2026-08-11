@@ -21,15 +21,16 @@
 import { ownsKeyboardInput } from "@/utils/browser/keyboardTarget";
 
 import { isNativelyActivatable } from "./activation";
+import { BACK_KEY_CODE } from "./back";
 import { focusEntryPoint, needsEntryPoint } from "./entryPoint";
 
 /**
  * The actions that are navigation rather than playback, and the key each one is.
  *
  * Everything else in `GAMEPAD_ACTION_LABELS` is the player's — seeking, volume,
- * captions, episodes — and goes to the player's own handler instead. Back is
- * Escape rather than a route change so that it means the same thing the Escape
- * key does: close the popout, or the modal, and only then leave the page.
+ * captions, episodes — and goes to the player's own handler instead. Back is a
+ * key rather than a direct route change so that it reaches everything that
+ * dismisses on Escape first: the popout, then the modal, and only then the page.
  */
 const ACTION_KEYS: Record<string, string> = {
   "navigate-up": "ArrowUp",
@@ -81,6 +82,10 @@ export function dispatchGamepadAction(action: string): boolean {
   const target = pressTarget();
   const event = new KeyboardEvent("keydown", {
     key,
+    // A controller's B *is* a Back button, so it carries the code that says so.
+    // `key` stays "Escape" because that is what every dismiss handler in the app
+    // listens for, and the code is what additionally earns the route change.
+    keyCode: key === "Escape" ? BACK_KEY_CODE : undefined,
     bubbles: true,
     cancelable: true,
     composed: true,

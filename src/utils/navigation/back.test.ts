@@ -1,9 +1,15 @@
 /* eslint-disable import/no-extraneous-dependencies */
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { pushScope } from "@/utils/browser/focusScopes";
 
-import { canGoBack, isBackKey, resolveBack, snapshotBackContext } from "./back";
+import {
+  canGoBack,
+  isBackKey,
+  isRouteBackKey,
+  resolveBack,
+  snapshotBackContext,
+} from "./back";
 
 const releases: (() => void)[] = [];
 
@@ -13,6 +19,11 @@ function keydown(init: KeyboardEventInit = {}) {
     cancelable: true,
     ...init,
   });
+}
+
+/** A real Back button, which is the only press that leaves the page. */
+function backButton(init: KeyboardEventInit = {}) {
+  return keydown({ key: "Unidentified", keyCode: 10009, ...init });
 }
 
 function openScope() {
@@ -31,6 +42,9 @@ beforeEach(() => {
 afterEach(() => {
   while (releases.length) releases.pop()!();
   document.body.innerHTML = "";
+  // The television cases below stub the user agent, and a leaked one would make
+  // every later check answer as a TV.
+  vi.restoreAllMocks();
 });
 
 describe("isBackKey", () => {
@@ -84,16 +98,30 @@ describe("resolveBack", () => {
 
   it("goes back when nothing is on screen to close", () => {
     window.history.pushState({ idx: 1 }, "");
-    expect(resolveBack(keydown(), snapshotBackContext(false))).toBe("history");
+    expect(resolveBack(backButton(), snapshotBackContext(false))).toBe(
+      "history",
+    );
+  });
+
+  // The reported bug: Escape on an ordinary page went back a route, so on a page
+  // reached from a movie it reopened the movie. Escape dismisses; it does not
+  // navigate. A remote's Back button and a controller's B still do both.
+  it("leaves the route alone for the Escape key", () => {
+    window.history.pushState({ idx: 1 }, "");
+    expect(resolveBack(keydown(), snapshotBackContext(false))).toBe("none");
+  });
+
+  it("still lets Escape close what is open", () => {
+    expect(resolveBack(keydown(), snapshotBackContext(true))).toBe("defer");
   });
 
   it("stays put on the first history entry", () => {
-    expect(resolveBack(keydown(), snapshotBackContext(false))).toBe("none");
+    expect(resolveBack(backButton(), snapshotBackContext(false))).toBe("none");
   });
 
   it("stands down on a press something else already handled", () => {
     window.history.pushState({ idx: 1 }, "");
-    const event = keydown();
+    const event = backButton();
     event.preventDefault();
 
     expect(resolveBack(event, snapshotBackContext(false))).toBe("none");
@@ -105,6 +133,45 @@ describe("resolveBack", () => {
     window.history.pushState({ idx: 1 }, "");
     openScope();
 
+    expect(resolveBack(backButton(), snapshotBackContext(false))).toBe("none");
+  });
+});
+
+describe("isRouteBackKey", () => {
+  it("accepts the Tizen and webOS back codes", () => {
+    expect(isRouteBackKey(backButton())).toBe(true);
+    expect(isRouteBackKey(keydown({ key: "Unidentified", keyCode: 461 }))).toBe(
+      true,
+    );
+  });
+
+  // Both are Back keys; only one of them leaves the page.
+  it("rejects the Escape key it shares isBackKey with", () => {
+    expect(isBackKey(keydown())).toBe(true);
+    expect(isRouteBackKey(keydown())).toBe(false);
+  });
+
+  it("rejects keys that are not Back at all", () => {
+    expect(isRouteBackKey(keydown({ key: "Enter" }))).toBe(false);
+    expect(isRouteBackKey(keydown({ key: "ArrowLeft" }))).toBe(false);
+  });
+
+  // No keyboard on a television, so an Escape there came from the remote.
+  it("accepts a bare Escape on a television, where nothing else could have sent it", () => {
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue(
+      "Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/537.36",
+    );
+    expect(isRouteBackKey(keydown())).toBe(true);
     expect(resolveBack(keydown(), snapshotBackContext(false))).toBe("none");
+
+    window.history.pushState({ idx: 1 }, "");
+    expect(resolveBack(keydown(), snapshotBackContext(false))).toBe("history");
+  });
+
+  it("rejects a bare Escape everywhere else", () => {
+    vi.spyOn(navigator, "userAgent", "get").mockReturnValue(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0.0.0 Safari/537.36",
+    );
+    expect(isRouteBackKey(keydown())).toBe(false);
   });
 });

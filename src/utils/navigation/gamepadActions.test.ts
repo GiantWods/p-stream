@@ -1,6 +1,7 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { isRouteBackKey } from "./back";
 import {
   dispatchGamepadAction,
   isNavigationAction,
@@ -127,6 +128,21 @@ describe("dispatchGamepadAction", () => {
 
     expect(document.activeElement).toBe(document.body);
     expect(watch.matching()).toHaveLength(1);
+    watch.stop();
+  });
+
+  // B is a Back button, not the Escape key: it dismisses what is open and then
+  // leaves the page. `key` is what every dismiss handler in the app listens for,
+  // and the code is what earns the route change on top of it.
+  it("sends Back as a real back button rather than a bare Escape", () => {
+    button("a");
+    const watch = seen("Escape");
+
+    dispatchGamepadAction("back");
+
+    const [event] = watch.matching();
+    expect(event.key).toBe("Escape");
+    expect(isRouteBackKey(event)).toBe(true);
     watch.stop();
   });
 

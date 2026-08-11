@@ -80,8 +80,32 @@ const ARROW_DRIVEN_INPUT_TYPES = [
   "week",
 ];
 
-/** Which pair of arrows is being asked about. */
-export type ArrowAxis = "horizontal" | "vertical";
+/** Which arrow is being asked about. */
+export type ArrowKeyDirection = "up" | "down" | "left" | "right";
+
+/**
+ * Whether the caret in a single-line field can still move `towardsEnd`.
+ *
+ * At either end of the value there is nothing left for the arrow to do, which is
+ * the moment it stops belonging to the field. A selection counts as movable
+ * because the arrows collapse it to one end or the other.
+ *
+ * Types like `email` throw on the selection API and report `null` instead; there
+ * the field keeps the key, which is the same answer as before this existed.
+ */
+function caretCanMove(el: HTMLInputElement, towardsEnd: boolean): boolean {
+  let start: number | null = null;
+  let end: number | null = null;
+  try {
+    start = el.selectionStart;
+    end = el.selectionEnd;
+  } catch {
+    return true;
+  }
+  if (start === null || end === null) return true;
+  if (start !== end) return true;
+  return towardsEnd ? start < el.value.length : start > 0;
+}
 
 /**
  * True when the target consumes the arrow keys itself.
@@ -102,17 +126,23 @@ export type ArrowAxis = "horizontal" | "vertical";
  * buttons do not and stay navigable; text fields do, because the arrows move
  * the caret.
  *
- * `axis` narrows that to the pair actually pressed, and the reason is the same
- * "stranded is worse" argument one paragraph up. A single-line text field is the
- * one control here that owns half the arrows: ← and → move the caret through the
- * value, and ↑ and ↓ have nothing to move it to. Without the distinction,
- * arrowing up into the search bar is the end of the session for anyone holding a
- * remote — the field swallows all four keys and only Back gets out. Multi-line
- * editing keeps all four, because there ↑ and ↓ really do move the caret.
+ * `direction` narrows that to the key actually pressed, and the reason is the same
+ * "stranded is worse" argument one paragraph up. A single-line text field owns an
+ * arrow only while that arrow has somewhere to put the caret:
+ *
+ * - ↑ and ↓ never do, so they always leave. Without this, arrowing up into the
+ *   search bar is the end of the session for anyone holding a remote — the field
+ *   swallows all four keys and only Back gets out.
+ * - ← and → do until the caret reaches that end of the value, and then they leave
+ *   too. An empty search box owns neither, which is the state it is in every time
+ *   a user arrives at it.
+ *
+ * Multi-line editing keeps all four, because there ↑ and ↓ really do move the
+ * caret, and so does every control the arrows drive the *value* of.
  */
 export function ownsArrowKeys(
   target: EventTarget | null,
-  axis?: ArrowAxis,
+  direction?: ArrowKeyDirection,
 ): boolean {
   const el = asElement(target);
   if (el === null) return false;
@@ -124,8 +154,9 @@ export function ownsArrowKeys(
     return true;
   }
   if (!isEditableElement(el)) return false;
-  if (axis !== "vertical") return true;
-  return el.nodeName !== "INPUT";
+  if (direction === undefined || el.nodeName !== "INPUT") return true;
+  if (direction === "up" || direction === "down") return false;
+  return caretCanMove(el as HTMLInputElement, direction === "right");
 }
 
 /**

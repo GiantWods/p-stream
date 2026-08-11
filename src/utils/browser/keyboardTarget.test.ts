@@ -111,7 +111,9 @@ describe("ownsArrowKeys", () => {
     expect(ownsArrowKeys(mount("<input />"))).toBe(true);
     expect(ownsArrowKeys(mount('<input type="search" />'))).toBe(true);
     expect(ownsArrowKeys(mount("<textarea></textarea>"))).toBe(true);
-    expect(ownsArrowKeys(mount('<div contenteditable="true"></div>'))).toBe(true);
+    expect(ownsArrowKeys(mount('<div contenteditable="true"></div>'))).toBe(
+      true,
+    );
     expect(ownsArrowKeys(mount('<div role="textbox"></div>'))).toBe(true);
   });
 
@@ -129,12 +131,47 @@ describe("ownsArrowKeys", () => {
     expect(ownsArrowKeys(null)).toBe(false);
   });
 
-  // ← and → move the caret through the value; ↑ and ↓ have nothing to move it
-  // to. Keeping all four is what strands a remote in the search bar.
+  // ↑ and ↓ have nothing to move the caret to. Keeping all four is what strands
+  // a remote in the search bar.
   it("gives up and down back from a single-line field", () => {
-    const input = mount('<input type="search" />');
-    expect(ownsArrowKeys(input, "horizontal")).toBe(true);
-    expect(ownsArrowKeys(input, "vertical")).toBe(false);
+    const input = mount(
+      '<input type="search" value="abc" />',
+    ) as HTMLInputElement;
+    input.setSelectionRange(1, 1);
+    expect(ownsArrowKeys(input, "left")).toBe(true);
+    expect(ownsArrowKeys(input, "right")).toBe(true);
+    expect(ownsArrowKeys(input, "up")).toBe(false);
+    expect(ownsArrowKeys(input, "down")).toBe(false);
+  });
+
+  // The other half of the same argument: an arrow the caret cannot answer is an
+  // arrow the field has no business keeping. An empty search box owns neither of
+  // them, which is the state a user arrives at it in.
+  it("gives left and right back at the ends of the value", () => {
+    const empty = mount('<input type="search" />');
+    expect(ownsArrowKeys(empty, "left")).toBe(false);
+    expect(ownsArrowKeys(empty, "right")).toBe(false);
+
+    const input = mount(
+      '<input type="search" value="abc" />',
+    ) as HTMLInputElement;
+    input.setSelectionRange(0, 0);
+    expect(ownsArrowKeys(input, "left")).toBe(false);
+    expect(ownsArrowKeys(input, "right")).toBe(true);
+
+    input.setSelectionRange(3, 3);
+    expect(ownsArrowKeys(input, "left")).toBe(true);
+    expect(ownsArrowKeys(input, "right")).toBe(false);
+  });
+
+  // The arrows collapse a selection rather than leaving the field.
+  it("keeps them both while text is selected", () => {
+    const input = mount(
+      '<input type="search" value="abc" />',
+    ) as HTMLInputElement;
+    input.setSelectionRange(0, 3);
+    expect(ownsArrowKeys(input, "left")).toBe(true);
+    expect(ownsArrowKeys(input, "right")).toBe(true);
   });
 
   it("keeps all four where up and down really move a caret", () => {
@@ -143,19 +180,22 @@ describe("ownsArrowKeys", () => {
       '<div contenteditable="true"></div>',
       '<div role="textbox"></div>',
     ]) {
-      expect(ownsArrowKeys(mount(html), "vertical")).toBe(true);
+      expect(ownsArrowKeys(mount(html), "up")).toBe(true);
+      expect(ownsArrowKeys(mount(html), "left")).toBe(true);
     }
   });
 
-  // These drive a value by ↑↓ rather than a caret, so the axis changes nothing.
+  // These drive a value rather than a caret, so the direction changes nothing.
   it("keeps all four on controls the arrows drive the value of", () => {
-    expect(ownsArrowKeys(mount("<select></select>"), "vertical")).toBe(true);
-    expect(ownsArrowKeys(mount('<input type="range" />'), "vertical")).toBe(
-      true,
-    );
-    expect(ownsArrowKeys(mount('<input type="number" />'), "vertical")).toBe(
-      true,
-    );
+    for (const html of [
+      "<select></select>",
+      '<input type="range" />',
+      '<input type="number" />',
+    ]) {
+      for (const dir of ["up", "down", "left", "right"] as const) {
+        expect(ownsArrowKeys(mount(html), dir)).toBe(true);
+      }
+    }
   });
 
   it("sits strictly between the other two predicates", () => {

@@ -313,8 +313,9 @@ export function moveFocus(direction: Direction): boolean {
  *    sees the event.
  * 2. A direction, unmodified.
  * 3. {@link ownsArrowKeys} — the control means something by this key itself.
- *    Asked per axis, so ↑ and ↓ still leave a single-line text field: nothing in
- *    it moves by them, and swallowing them strands a remote in the search bar.
+ *    Asked per key, so a single-line text field gives back every arrow that has
+ *    nowhere to put the caret: ↑ and ↓ always, and ←/→ at the ends of the value.
+ *    Swallowing them all is what strands a remote in the search bar.
  * 4. Dormant unless activation says otherwise. Checked after the cheap tests
  *    so a disabled engine costs a property read per arrow press.
  */
@@ -327,9 +328,7 @@ export function handleNavigationKeydown(
   const direction = directionForKey(event);
   if (direction === null) return false;
 
-  const axis =
-    direction === "left" || direction === "right" ? "horizontal" : "vertical";
-  if (ownsArrowKeys(event.target, axis)) return false;
+  if (ownsArrowKeys(event.target, direction)) return false;
   if (!isEnabled()) return false;
 
   if (!moveFocus(direction)) return false;
