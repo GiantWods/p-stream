@@ -16,7 +16,7 @@ window.__CONFIG__ = {
   VITE_BACKEND_URL: null,
 
   // A comma separated list of disallowed IDs in the case of a DMCA claim - in the format "series-<id>" and "movie-<id>"
-  VITE_DISALLOWED_IDS: "movie-831988",
+  VITE_DISALLOWED_IDS: "movie-831988,movie-298454",
   // Allowing FEBBOX API TO BE AENBALED.
   VITE_ALLOW_FEBBOX_KEY: "true",
 };
