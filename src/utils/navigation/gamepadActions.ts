@@ -73,9 +73,11 @@ export function dispatchGamepadAction(action: string): boolean {
   // is coming to give it a second try. Spend the press on landing somewhere
   // rather than on a move with no origin, which would do nothing at all.
   //
-  // Not for Back, which is about leaving rather than arriving.
-  if (key !== "Escape" && needsEntryPoint()) {
-    focusEntryPoint();
+  // Not for Back, which is about leaving rather than arriving. And only when it
+  // actually lands: the player in transport mode has no candidates at all, so
+  // spending the press there swallowed every D-pad and A press a pad user could
+  // make — including the one that opens widget mode.
+  if (key !== "Escape" && needsEntryPoint() && focusEntryPoint()) {
     return true;
   }
 

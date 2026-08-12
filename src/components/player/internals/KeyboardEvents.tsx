@@ -6,6 +6,7 @@ import { useCaptions } from "@/components/player/hooks/useCaptions";
 import { usePlayerMeta } from "@/components/player/hooks/usePlayerMeta";
 import { useVolume } from "@/components/player/hooks/useVolume";
 import { useOverlayRouter } from "@/hooks/useOverlayRouter";
+import { useNavigationEnabled } from "@/hooks/useSpatialNavigation";
 import { useOverlayStack } from "@/stores/interface/overlayStack";
 import { usePlayerStore } from "@/stores/player/store";
 import { usePreferencesStore } from "@/stores/preferences";
@@ -20,6 +21,7 @@ import {
   matchesShortcut,
 } from "@/utils/browser/keyboardShortcuts";
 import { ownsKeyboardInput } from "@/utils/browser/keyboardTarget";
+import { isArrowKey } from "@/utils/navigation/playerMode";
 
 export function KeyboardEvents() {
   const router = useOverlayRouter("");
@@ -72,6 +74,7 @@ export function KeyboardEvents() {
     (s) => s.enableNumberKeySeeking,
   );
   const widgetMode = usePlayerStore((s) => s.interface.widgetMode);
+  const navigationEnabled = useNavigationEnabled();
 
   const [isRolling, setIsRolling] = useState(false);
   const volumeDebounce = useRef<ReturnType<typeof setTimeout> | undefined>();
@@ -321,6 +324,7 @@ export function KeyboardEvents() {
     setEnableNativeSubtitles,
     enableNumberKeySeeking,
     widgetMode,
+    navigationEnabled,
   });
 
   useEffect(() => {
@@ -359,6 +363,7 @@ export function KeyboardEvents() {
       setEnableNativeSubtitles,
       enableNumberKeySeeking,
       widgetMode,
+      navigationEnabled,
     };
   }, [
     setShowVolume,
@@ -390,6 +395,7 @@ export function KeyboardEvents() {
     setEnableNativeSubtitles,
     enableNumberKeySeeking,
     widgetMode,
+    navigationEnabled,
   ]);
 
   useEffect(() => {
@@ -403,6 +409,13 @@ export function KeyboardEvents() {
       // focused is the same class of surprise the mode exists to remove.
       // Everything here is untouched in transport mode, which is the default.
       if (dataRef.current.widgetMode) return;
+
+      // The arrows belong to directional navigation for as long as the user has
+      // it on, in the player as much as anywhere else in the app. Widget mode
+      // alone is not enough of a guard: it is entered *by* an arrow, and the
+      // presses that do not open it — focus outside the player, or a mode that
+      // just timed out — would otherwise still land here and seek.
+      if (dataRef.current.navigationEnabled && isArrowKey(evt)) return;
 
       const k = evt.key;
       const keyL = evt.key.toLowerCase();

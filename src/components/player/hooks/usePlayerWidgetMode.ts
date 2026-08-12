@@ -4,10 +4,12 @@ import { useOverlayRouter } from "@/hooks/useOverlayRouter";
 import { useNavigationEnabled } from "@/hooks/useSpatialNavigation";
 import { usePlayerStore } from "@/stores/player/store";
 import { ownsKeyboardInput } from "@/utils/browser/keyboardTarget";
-import { focusCandidate } from "@/utils/navigation/engine";
+import { directionForKey, focusCandidate } from "@/utils/navigation/engine";
 import { resolveEntryPoint } from "@/utils/navigation/entryPoint";
 import {
   canEnterWidgetMode,
+  canEnterWidgetModeByArrow,
+  isWidgetArrowEntry,
   isWidgetEntryKey,
   isWidgetExitKey,
   WIDGET_IDLE_MS,
@@ -66,9 +68,32 @@ export function usePlayerWidgetMode(
       const state = stateRef.current;
 
       if (!state.active) {
-        if (!isWidgetEntryKey(event)) return;
-        if (ownsKeyboardInput(event.target)) return;
-        if (!canEnterWidgetMode()) return;
+        if (isWidgetEntryKey(event)) {
+          if (ownsKeyboardInput(event.target)) return;
+          if (!canEnterWidgetMode()) return;
+          event.preventDefault();
+          setWidgetMode(true);
+          return;
+        }
+
+        // An arrow opens the mode and stops there. It deliberately does not also
+        // take a step: this press is the one that reveals the controls, and the
+        // engine has nothing to step *from* until the effect below has landed
+        // focus. Claiming it is also what keeps the transport handler off it —
+        // `KeyboardEvents.tsx` gives the arrows up whenever the engine is on, but
+        // it runs on `window` and this runs in the capture phase, so the guard
+        // that actually holds is this `preventDefault`.
+        if (!isWidgetArrowEntry(event)) return;
+        const direction = directionForKey(event) ?? undefined;
+        if (
+          !canEnterWidgetModeByArrow(
+            event.target,
+            containerEl.current,
+            direction,
+          )
+        ) {
+          return;
+        }
         event.preventDefault();
         setWidgetMode(true);
         return;
@@ -91,7 +116,7 @@ export function usePlayerWidgetMode(
     document.addEventListener("keydown", onKeyDownCapture, true);
     return () =>
       document.removeEventListener("keydown", onKeyDownCapture, true);
-  }, [enabled, setWidgetMode]);
+  }, [enabled, setWidgetMode, containerEl]);
 
   // Somewhere to land. Without this the mode switches, the controls appear, and
   // focus is still on `<body>` — where the engine has no origin and every arrow

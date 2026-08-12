@@ -80,10 +80,13 @@ function BaseContainer(props: { children?: ReactNode }) {
     // The two modes, as one attribute swap.
     //
     // Transport mode is `data-nav-skip`: directional navigation stays out of
-    // the player entirely, because KeyboardEvents.tsx binds all four arrows on
-    // `window` — up/down to volume, left/right to a locked 5s seek — and the
-    // volume branch does not call preventDefault, so the engine's usual "stand
-    // down if someone claimed this key" check cannot see it.
+    // the player entirely. With the engine off that is because KeyboardEvents.tsx
+    // owns all four arrows on `window` — up/down to volume, left/right to a
+    // locked 5s seek — and the volume branch does not call preventDefault, so the
+    // engine's usual "stand down if someone claimed this key" check cannot see
+    // it. With the engine on the arrows are the engine's, and the skip is instead
+    // what keeps a control bar nobody has asked for out of the candidate census
+    // until an arrow or OK asks for it.
     //
     // Widget mode swaps it for `data-nav-scope`, which is the same promise from
     // the other side: the controls become candidates, and the player becomes a
