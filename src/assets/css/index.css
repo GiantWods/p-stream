@@ -17,7 +17,8 @@ body {
 
 @layer base {
   .theme-transition * {
-    transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+    transition-property:
+      color, background-color, border-color, text-decoration-color, fill, stroke;
     transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     transition-duration: 300ms;
   }
@@ -328,6 +329,15 @@ html[data-input-modality="key"] .tabbable:focus {
 .tabbable:focus-visible {
   outline: 2px solid theme("colors.type.link");
   outline-offset: 2px;
+}
+
+/* Opt-in: focus mirrors the element's own hover growth, on the same gate as the
+ * ring above, so a mouse click never leaves a button sitting enlarged. The
+ * element brings its own transition. */
+html[data-input-modality="key"] .focus-grow:focus,
+html[data-input-modality="key"] .focus-grow:focus-within {
+  transform: scale(1.1);
+  opacity: 1;
 }
 
 [dir="rtl"] .transform {

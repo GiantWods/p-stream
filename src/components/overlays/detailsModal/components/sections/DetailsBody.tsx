@@ -233,7 +233,7 @@ export function DetailsBody({
                     : t("details.play")}
             </span>
           </Button>
-          <div className="flex items-center gap-1 flex-shrink-0">
+          <div className="flex items-center gap-3 flex-shrink-0">
             <MediaRatingCapsule
               media={{
                 tmdbId: data.id?.toString() || "",
@@ -260,13 +260,10 @@ export function DetailsBody({
             <button
               type="button"
               onClick={onShareClick}
-              className="p-2 opacity-75 transition-opacity duration-300 hover:scale-110 hover:cursor-pointer hover:opacity-95"
+              className="focus-grow cursor-pointer rounded-full opacity-75 transition-[opacity,transform] duration-300 ease-out hover:scale-110 hover:opacity-95"
               title="Share"
             >
-              <IconPatch
-                icon={Icons.IOS_SHARE}
-                className="transition-transform duration-300 hover:scale-110 hover:cursor-pointer"
-              />
+              <IconPatch icon={Icons.IOS_SHARE} />
             </button>
           </div>
         </div>

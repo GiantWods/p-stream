@@ -234,6 +234,8 @@ function MediaCardContent({
         } ${closable ? "jiggle" : ""}`}
         tabIndex={canLink ? 0 : -1}
         onKeyDown={(e) => {
+          // Buttons inside the card keep their own Enter.
+          if (e.target !== e.currentTarget) return;
           if (e.key !== "Enter" || e.repeat) return;
           e.preventDefault();
           e.currentTarget.click();
@@ -315,16 +317,16 @@ function MediaCardContent({
 
             {!closable && (
               <div
-                className="absolute bookmark-button"
+                className="absolute bookmark-button p-2"
                 onClick={(e) => e.preventDefault()}
               >
-                <MediaBookmarkButton media={media} />
+                <MediaBookmarkButton media={media} focusable={false} />
               </div>
             )}
 
             {searchQuery.length > 0 && !closable ? (
-              <div className="absolute" onClick={(e) => e.preventDefault()}>
-                <MediaBookmarkButton media={media} />
+              <div className="absolute p-2" onClick={(e) => e.preventDefault()}>
+                <MediaBookmarkButton media={media} focusable={false} />
               </div>
             ) : null}
 

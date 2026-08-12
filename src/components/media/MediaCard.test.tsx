@@ -7,6 +7,7 @@ import { createRoot, Root } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { MediaBookmarkButton } from "@/components/media/MediaBookmark";
 import { MediaCard, MediaCardSkeleton } from "@/components/media/MediaCard";
 import { WatchedMediaCard } from "@/components/media/WatchedMediaCard";
 import { usePreferencesStore } from "@/stores/preferences";
@@ -181,6 +182,19 @@ describe("MediaCard keyboard activation", () => {
     expect(clicks).not.toHaveBeenCalled();
   });
 
+  it("leaves Enter on the buttons inside it to those buttons", () => {
+    // Keydown bubbles up from them. Handling it here cancelled their own native
+    // activation, so OK on "more info" opened the title instead of its details.
+    render(<MediaCard linkable media={MOVIE} onShowDetails={() => {}} />);
+    const link = container.querySelector("a")!;
+    const clicks = vi.fn();
+    link.addEventListener("click", clicks);
+    const more = container.querySelector<HTMLElement>(".media-more-button")!;
+
+    expect(pressEnter(more)).toBe(false);
+    expect(clicks).not.toHaveBeenCalled();
+  });
+
   it("does not offer a card that cannot be linked as a focus candidate", () => {
     // Unreleased media renders as a card but goes nowhere, so the card itself
     // is not a target. Its "more info" button still is.
@@ -217,6 +231,20 @@ describe("MediaCard as a navigation cell", () => {
     // column of one has nowhere to go in any direction, which is correct.
     render(<MediaCard linkable media={{ ...MOVIE, year: 2999 }} />);
     expect(cell().querySelectorAll(FOCUSABLE_SELECTOR)).toHaveLength(1);
+  });
+});
+
+describe("MediaBookmarkButton", () => {
+  it("is a control of its own", () => {
+    render(<MediaBookmarkButton media={MOVIE} />);
+    const button = container.querySelector("button");
+    expect(button).not.toBeNull();
+    expect(button!.matches(FOCUSABLE_SELECTOR)).toBe(true);
+  });
+
+  it("stays out of the way where it only appears on hover", () => {
+    render(<MediaBookmarkButton media={MOVIE} focusable={false} />);
+    expect(container.querySelectorAll(FOCUSABLE_SELECTOR)).toHaveLength(0);
   });
 });
 

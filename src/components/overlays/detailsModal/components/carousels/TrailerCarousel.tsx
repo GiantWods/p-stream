@@ -68,7 +68,7 @@ export function TrailerCarousel({
       <div
         data-nav-row
         data-nav-remember
-        className="flex overflow-x-auto scrollbar-none pb-4 gap-4"
+        className="flex overflow-x-auto scrollbar-none pt-2 pb-4 gap-4"
       >
         {allTrailers.map((video) => {
           const isImdbTrailer = video.id === "imdb-trailer";
