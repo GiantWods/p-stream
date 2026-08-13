@@ -218,11 +218,6 @@ function ThemePreview(props: {
 }) {
   const { t } = useTranslation();
 
-  // Same shape as a media card: a big preview plus small edit and delete
-  // buttons tucked under its corner, all inside one cell. A single column keeps
-  // sideways moving between themes and puts the two buttons below the preview,
-  // where they are. These are the three candidates `spatial.fixtures.test.ts`
-  // records as unreachable on Settings.
   return (
     <div
       data-nav-grid="1"
@@ -232,10 +227,6 @@ function ThemePreview(props: {
       {/* Little card thing */}
       <div
         tabIndex={0}
-        // keydown and preventDefault, matching every other hand-rolled Enter
-        // handler in the app — see the note in LinksDropdown. Selecting a theme
-        // is idempotent so a double activation would not show here, but the
-        // rule is only useful if it holds everywhere.
         onKeyDown={(e) => {
           if (e.key !== "Enter" || e.repeat) return;
           e.preventDefault();

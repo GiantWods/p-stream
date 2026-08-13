@@ -11,10 +11,6 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// This decides whether the arrow keys stop scrolling the page for someone who
-// never asked, so it is deliberately narrow. Real strings, taken from the two
-// platforms the TV build targets and from the devices most likely to be caught
-// by a looser test.
 describe("isTvBrowser", () => {
   it("recognises Tizen", () => {
     withUserAgent(
@@ -35,8 +31,6 @@ describe("isTvBrowser", () => {
     expect(isTvBrowser()).toBe(true);
   });
 
-  // The broad list in `hooks/useIsTv.ts` matches all three of these. Forcing
-  // navigation on here would take the arrow keys off people holding a phone.
   it("does not fire for phones, tablets or desktops", () => {
     withUserAgent(
       "Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/23.0 Chrome/115.0.0.0 Mobile Safari/537.36",

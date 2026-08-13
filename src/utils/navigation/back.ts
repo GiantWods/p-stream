@@ -1,38 +1,8 @@
-/**
- * The Back key: Escape on a keyboard, the dedicated button on a remote.
- *
- * There is already a handler that closes the top modal on Escape
- * (`useGlobalKeyboardEvents.ts`), and B3 says to defer to it rather than
- * duplicate it. Deferring is harder than it sounds, because that handler is
- * registered first and runs first — by the time anything of ours sees the same
- * event, the modal it closed is already out of the store. Asking "is a modal
- * open?" in the bubble phase therefore always answers "no", and answering it
- * that way would send the user back a route every time they dismissed a dialog.
- *
- * So the decision is split: {@link snapshotBackContext} runs in the capture
- * phase, while the answer is still true, and {@link resolveBack} runs in the
- * bubble phase, where `defaultPrevented` is finally meaningful.
- */
-
 import { getScopeDepth } from "@/utils/browser/focusScopes";
 import { isTvBrowser } from "@/utils/browser/tvBrowser";
 
-/**
- * TV back-key codes, from `src/tv/platform/keymap.ts` (Tizen 10009, webOS 461).
- *
- * Duplicated rather than imported: that file is TV-side and this one ships to
- * the website. Both are small tables of numbers that vendors do not change.
- * These keys have no meaningful `event.key` — Tizen reports `"Unidentified"` —
- * so the code is the only thing to match on.
- */
 const BACK_KEY_CODES = [10009, 461];
 
-/**
- * The code a synthesized Back press carries so it reads as a real Back button.
- *
- * A gamepad's B is a Back button and wants the whole behaviour; the Escape key on
- * a keyboard is not one and wants only half of it. See {@link isRouteBackKey}.
- */
 export const BACK_KEY_CODE = BACK_KEY_CODES[0];
 
 export function isBackKey(event: KeyboardEvent): boolean {
@@ -40,23 +10,6 @@ export function isBackKey(event: KeyboardEvent): boolean {
   return BACK_KEY_CODES.indexOf(event.keyCode) !== -1;
 }
 
-/**
- * Whether this press is a Back *button* rather than the Escape key.
- *
- * Both close what is open, and only a Back button also leaves the page. On a
- * remote or a controller, Back is the only way out of anywhere and going back a
- * route is exactly what the user asked for. Escape is not that key: on a keyboard
- * it means "dismiss this", and a page with nothing to dismiss should stay where it
- * is. Making them the same thing meant Escape on any ordinary page navigated to
- * whatever the user had visited before it — from a page reached via a movie, it
- * reopened the movie.
- *
- * A television is the exception, and it is not a hedge: there is no keyboard on
- * one, so an Escape that arrives there came from the remote by definition. The
- * dedicated Tizen and webOS buttons report a code and are recognised anywhere, but
- * a TV browser that synthesizes a plain Escape instead would otherwise leave the
- * user with no way back at all.
- */
 export function isRouteBackKey(event: KeyboardEvent): boolean {
   if (!isBackKey(event)) return false;
   if (BACK_KEY_CODES.indexOf(event.keyCode) !== -1) return true;
@@ -76,16 +29,6 @@ export interface BackContext {
   hadModal: boolean;
 }
 
-/**
- * Whether `history.back()` stays inside the app.
- *
- * React Router v6 stamps a monotonic `idx` into `history.state` on every
- * navigation it makes. Index 0 means the entry the user arrived on, so going
- * back from there leaves the site — which, from a Back *button*, reads as the
- * app closing itself. On a TV that is the correct behaviour and Phase C's
- * platform layer owns it (Tizen and webOS both want an explicit exit call);
- * here, doing nothing is right.
- */
 export function canGoBack(): boolean {
   const state = window.history.state;
   if (state === null || typeof state !== "object") return false;
@@ -102,20 +45,12 @@ export function resolveBack(
   event: KeyboardEvent,
   context: BackContext,
 ): BackAction {
-  // A dropdown, a Headless UI `Listbox`, a `focus-trap` — anything that closed
-  // itself on this press said so here. Going back on top of that would undo a
-  // navigation the user never asked to undo.
   if (event.defaultPrevented) return "none";
 
   if (context.hadModal) return "defer";
 
-  // A live focus scope with no modal behind it is a player popout or an
-  // overlay mid-transition. Neither is ours to close, and neither is a good
-  // moment to change route.
   if (getScopeDepth() > 0) return "none";
 
-  // Everything above is "is there something on screen to close", and Escape gets
-  // all of it. Only leaving the page is reserved for a real Back button.
   if (!isRouteBackKey(event)) return "none";
 
   return canGoBack() ? "history" : "none";

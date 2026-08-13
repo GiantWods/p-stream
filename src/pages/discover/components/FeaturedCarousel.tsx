@@ -771,15 +771,6 @@ export function FeaturedCarousel({
 
   const mediaTitle = currentMedia.title || currentMedia.name;
 
-  // While a search is running the carousel fades out but stays mounted, and
-  // opacity alone leaves every control it holds focusable and clickable: the
-  // two arrows, ten dots and Play Now / More Info / Random stayed in the tab
-  // order, several of them squeezed to a negative y by the collapse to h-24,
-  // so Tab walked through fifteen stops that were not on screen and Play Now
-  // would navigate to a title nobody could see. visibility takes them out of
-  // the tab order, out of hit testing, and out of the focusable-candidate
-  // filter. It transitions discretely and holds `visible` for the whole
-  // duration on the way out, so the fade is unaffected.
   const searchClasses = classNames(
     "transition-[opacity,visibility] duration-300",
     searching ? "opacity-0 invisible" : "opacity-100 visible",
@@ -1010,10 +1001,6 @@ export function FeaturedCarousel({
           </div>
         </div>
       </div>
-      {/* Navigation Dots. After the content overlay, not before it: the dots
-          sit below the Play/More info row on screen, so tabbing should reach
-          them after it. Their z-index already put them above the overlay, so
-          moving them does not change what is drawn on top. */}
       <div
         className={classNames(
           "absolute bottom-8 left-1/2 -translate-x-1/2 z-[19] flex gap-2",

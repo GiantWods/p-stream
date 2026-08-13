@@ -22,16 +22,6 @@ export function useGlobalKeyboardEvents() {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't handle keyboard events if the user is typing, or is on a
-      // control that handles the key itself.
-      //
-      // Escape is exempt, and has to be. It is not a character, no field in
-      // this app consumes it, and this is the only handler that closes the top
-      // modal — so with the guard applied to it, a modal containing a text
-      // field, a checkbox or a <select> cannot be dismissed from the keyboard
-      // at all once focus is on one. On a TV that is a dead end rather than an
-      // annoyance: the remote's back key arrives here as Escape and there is
-      // no second key to try instead.
       if (event.key !== "Escape" && ownsKeyboardInput(event.target)) {
         return;
       }

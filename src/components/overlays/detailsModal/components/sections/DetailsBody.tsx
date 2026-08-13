@@ -201,8 +201,6 @@ export function DetailsBody({
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        {/* Opening a title's details and landing on Play is the whole point of
-            the dialog. The close button would otherwise win on document order. */}
         <div data-nav-first className="flex items-center gap-4">
           <Button
             onClick={onPlayClick}

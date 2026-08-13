@@ -8,11 +8,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Icons } from "@/components/Icon";
 import { Notice, NoticeOrder, NoticeStackHost } from "@/components/NoticeStack";
 
-/**
- * What matters here is that the notices end up in one column rather than each
- * one positioning itself absolutely: that is what let them overlap.
- */
-
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
 let container: HTMLDivElement;

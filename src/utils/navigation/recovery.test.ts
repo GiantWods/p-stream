@@ -46,9 +46,6 @@ function main() {
   return el;
 }
 
-// The modality module keeps its state in a module variable, and its teardown is
-// the only thing that resets it. Mounted per test so a "pointer" left behind by
-// one cannot decide the outcome of the next.
 let endModality: () => void;
 
 beforeEach(() => {
@@ -70,10 +67,6 @@ function clickedWithAPointer() {
 
 describe("rememberFocus", () => {
   it("records the ancestors while they still reach the document", () => {
-    // The reason this function exists. Walking up from the element afterwards
-    // stops at whatever was detached — the chain above the removal point is
-    // gone from its point of view, and if the element itself is what was
-    // removed then `parentElement` is null outright.
     const root = main();
     const grid = document.createElement("div");
     const { wrapper, el } = card("a", 0, 0);
@@ -123,8 +116,6 @@ describe("recoverFocus", () => {
   });
 
   it("widens one ancestor at a time rather than jumping to the chrome", () => {
-    // A deleted bookmark should hand focus to another bookmark, even though the
-    // navbar is closer to the top of the document.
     const root = main();
     const nav = document.createElement("div");
     nav.appendChild(button("home", 0, 0));
@@ -173,9 +164,6 @@ describe("recoverFocus", () => {
   });
 
   it("does not recover into a skipped subtree", () => {
-    // The A11 case: a closing overlay keeps its controls in the DOM for ~200 ms
-    // and is marked skipped for exactly that window. Landing in one means
-    // landing on a control that is fading out.
     const root = main();
     const overlay = document.createElement("div");
     overlay.setAttribute("data-nav-skip", "");
@@ -193,10 +181,6 @@ describe("recoverFocus", () => {
     expect(document.activeElement).toBe(outside);
   });
 
-  // The settings Save bar: the button that was clicked is the button that goes
-  // away, so the ring still reads "pointer" and the recovered control renders no
-  // outline at all. Landing focus somewhere nobody can see is the same bug as
-  // not landing it.
   it("turns the ring on, so the recovered control is visible", () => {
     const root = main();
     const a = card("a", 0, 0);

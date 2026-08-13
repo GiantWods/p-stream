@@ -1,27 +1,3 @@
-/**
- * The `?navdebug=1` probe: draws a numbered box over every element directional
- * navigation would consider, outlines the containers the resolver has resolved
- * around focus, and reports how many candidates there are, how long finding them
- * took, and how many are scrolled out of view.
- *
- * This exists to answer questions the navigation code cannot be written without
- * — whether a linear scan over the candidate set is affordable per keypress, and
- * how much of the page is off-screen at any moment. It is loaded only when the
- * flag is set (see `navDebug.ts`), so it is a separate chunk and normal users
- * never fetch it.
- *
- * The container half was added for B4, and it is the only way to tell a working
- * hint from a typo. Container hints fail silently: a `data-nav-row` on the
- * scroll viewport instead of the track, or a `data-nav-grid="4"` on a grid that
- * reflows to three columns at this width, still navigates — it just lands
- * somewhere slightly wrong, which from the outside is indistinguishable from the
- * geometry being off. B5 annotates nine surfaces, and doing that blind is
- * guesswork.
- *
- * Chromium 76 safe: no `inset`, no optional chaining in the emitted output
- * beyond what the build already downlevels, no `checkVisibility`.
- */
-
 import {
   FOCUSABLE_SELECTOR,
   collectFocusables,
@@ -55,23 +31,11 @@ export interface NavDebugReport {
   count: number;
   /** How many of those lie entirely outside the viewport. */
   offscreen: number;
-  /**
-   * Of the offscreen ones, how many are off to the left or right rather than
-   * above or below. These are the carousel items: the rows render every item
-   * into an `overflow-x-scroll` container, so they are real, focusable, and
-   * unreachable without scrolling the row. Vertical overflow is just a long
-   * page and behaves normally.
-   */
   offscreenX: number;
   /** Median of `TIMING_RUNS` collections, in milliseconds. */
   medianMs: number;
   /** Slowest of `TIMING_RUNS` collections, in milliseconds. */
   worstMs: number;
-  /**
-   * The container chain resolved around the focused element, innermost first,
-   * as the labels drawn on screen. Empty on an unannotated surface, which is
-   * itself the answer when a hint was expected to be there.
-   */
   containers: string[];
 }
 
@@ -80,9 +44,6 @@ function getContainer(): HTMLElement {
   if (existing) return existing;
   const el = document.createElement("div");
   el.id = CONTAINER_ID;
-  // No tabindex anywhere in here, so the probe never shows up in its own
-  // results. Explicit top/left/width/height rather than `inset`, which needs
-  // Chromium 87.
   el.style.cssText =
     "position:fixed;top:0;left:0;width:100%;height:100%;" +
     "pointer-events:none;z-index:2147483647";
@@ -117,14 +78,6 @@ function containerKind(entry: NavContainer): string {
   return entry.isScope ? "scope" : entry.kind;
 }
 
-/**
- * The containers around focus, dashed and labelled with their depth.
- *
- * Drawn on top of the candidate boxes and inset by depth so nested containers
- * stay distinguishable when they share an edge — a `data-nav-row` on the track
- * and another on the viewport around it are the exact mistake this has to be
- * able to show.
- */
 function drawContainers(frag: DocumentFragment, chain: NavContainer[]) {
   for (let depth = 0; depth < chain.length; depth += 1) {
     const entry = chain[depth];
@@ -198,11 +151,6 @@ export interface NavRectDump {
   scopeDepth: number;
   /** Rects are viewport-relative, so they only mean anything at this size. */
   viewport: { width: number; height: number };
-  /**
-   * Where the page was scrolled when this was taken. Not needed to interpret
-   * the rects — it is here so a dump can be reproduced, since scrolling a
-   * carousel changes which candidates are on screen without changing the DOM.
-   */
   scroll: { x: number; y: number };
   count: number;
   rects: NavRectEntry[];
@@ -228,21 +176,6 @@ function describeScope(scope: HTMLElement | null): string {
   return `${scope.tagName.toLowerCase()}${classes}`;
 }
 
-/**
- * The candidate set as pure geometry, for B1's resolver fixtures.
- *
- * `measure()` reports counts and timings, which answered A6's questions but
- * cannot be asserted against. The resolver is a pure function over rects, and
- * the one thing it must not be tuned against is geometry someone typed out by
- * hand — a hand-drawn grid agrees with whatever the resolver already does.
- * This returns the real thing instead, so the unit tests run on the layout the
- * app actually produces. `scripts/website-navrects.mjs` drives it across the
- * surfaces and writes the fixtures.
- *
- * Rounded to 2dp: subpixel layout jitter would otherwise churn the committed
- * fixtures on every capture, and no navigation decision turns on 1/100th of a
- * pixel.
- */
 export function dumpRects(): NavRectDump {
   const scope = getActiveScope();
   const root: HTMLElement | Document = scope ?? document;
@@ -274,28 +207,15 @@ export function dumpRects(): NavRectDump {
   };
 }
 
-/**
- * Collects, times, draws, and returns the numbers. Safe to call by hand from a
- * console — `window.__navDebug.measure()` — which is how this runs on a TV,
- * where there is no address bar to put the flag in.
- */
 export function measure(): NavDebugReport {
   const scope = getActiveScope();
   const active = document.activeElement;
   const focused = active instanceof HTMLElement ? active : null;
 
-  // `resolveSearchRoot` rather than the scope alone, so this reports the
-  // candidate set the engine will really search — a `data-nav-scope` inside an
-  // open modal narrows it further, and a probe that disagrees with the engine
-  // about that is worse than no probe.
   const root: HTMLElement | Document =
     focused === null ? (scope ?? document) : resolveSearchRoot(focused);
   const chain = focused === null ? [] : containerChain(focused, root);
 
-  // Timed repeatedly because the first run pays for a layout flush that the
-  // rest reuse. Both numbers are reported: the median is what a keypress costs
-  // in a settled page, the worst is closer to what it costs right after a
-  // render.
   const times: number[] = [];
   let candidates: HTMLElement[] = [];
   for (let i = 0; i < TIMING_RUNS; i += 1) {
@@ -335,8 +255,6 @@ let scheduled = 0;
 function report() {
   scheduled = 0;
   const result = measure();
-  // Only log when something changed, so a page that is merely animating does
-  // not bury the numbers that matter.
   const signature = [
     result.scope,
     result.count,
@@ -372,20 +290,11 @@ export function startNavDebug(): () => void {
     attributeFilter: ["class", "style", "tabindex", "disabled", "hidden"],
   });
 
-  // Scrolling changes which candidates are offscreen without changing the DOM,
-  // and it is the whole reason the offscreen count is interesting: the
-  // carousels render every item into an `overflow-x-scroll` container.
   window.addEventListener("scroll", schedule, true);
   window.addEventListener("resize", schedule);
 
-  // The container outlines are drawn around whatever has focus, so they have to
-  // be redrawn when focus moves. The MutationObserver above does not see that:
-  // moving focus changes no attribute in its filter.
   document.addEventListener("focusin", schedule);
 
-  // The underlying pieces go on the handle too, so a measurement script or a
-  // TV inspector session can ask its own questions without reimplementing the
-  // selector and drifting from it.
   (window as any).__navDebug = {
     measure,
     dumpRects,

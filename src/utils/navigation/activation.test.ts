@@ -5,12 +5,6 @@ import { handleActivationKeydown, isNativelyActivatable } from "./activation";
 
 const enabled = () => true;
 
-/**
- * Dispatches a real event so propagation and `defaultPrevented` behave the way
- * they will in the browser. Every check in `handleActivationKeydown` past the
- * first is about the target; the first is about the phase, and only a real
- * dispatch can get that wrong.
- */
 function press(
   el: HTMLElement,
   key: string,
@@ -114,9 +108,6 @@ describe("handleActivationKeydown", () => {
   });
 
   it("stands down on an element that handled the key itself", () => {
-    // This is A9's whole finding: seven `[tabindex]` elements in this app
-    // already act on Enter, and clicking them again either double-fires or,
-    // for the navbar dropdown, opens and immediately shuts it.
     const el = countClicks(clickable("div", { tabindex: "0" }));
     el.addEventListener("keydown", (event) => event.preventDefault());
 
@@ -128,9 +119,6 @@ describe("handleActivationKeydown", () => {
   });
 
   it("ignores an element with no tabindex", () => {
-    // Not focusable, so it should never be the target — but a stray click on a
-    // div does make it `event.target`, and clicking arbitrary layout on Space
-    // would be worse than doing nothing.
     const el = countClicks(clickable("div"));
 
     press(el, "Enter");

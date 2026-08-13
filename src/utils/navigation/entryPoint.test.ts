@@ -69,9 +69,6 @@ describe("resolveEntryPoint", () => {
   });
 
   it("never leaves the landmark, so a modal's controls are not entry points", () => {
-    // The modals in `App` are siblings of `<main>`, and one of them is mounted
-    // at all times. Entering into a dialog nobody opened would be worse than
-    // entering nowhere.
     const root = main();
     const inside = button("inside", 100);
     root.appendChild(inside);
@@ -92,8 +89,6 @@ describe("resolveEntryPoint", () => {
   });
 
   it("descends into a marked container", () => {
-    // Marking a carousel is more natural than marking whichever card happens
-    // to be first inside it.
     const root = main();
     const container = document.createElement("div");
     container.setAttribute("data-nav-first", "");

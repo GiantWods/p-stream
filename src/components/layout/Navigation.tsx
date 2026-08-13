@@ -113,9 +113,6 @@ function MobileActionsMenu(props: {
       ? props.unreadCount > 0
       : props.unreadCount === "99+";
 
-  // Escape closes the menu and hands focus back to the button. Without it the
-  // scope below has no exit on a remote, and Escape would go back a route
-  // instead -- leaving the menu open over a page the user never asked for.
   return (
     <div
       className="relative is-mobile-menu lg:hidden"
@@ -197,13 +194,6 @@ export interface NavigationProps {
   noLightbar?: boolean;
   doBackground?: boolean;
   clearBackground?: boolean;
-  /**
-   * Rendered between the left and right icon clusters. Exists so the featured
-   * home page's search row can be a real child of the nav: it is drawn in the
-   * gap between the clusters, so it has to sit between them in the DOM to be
-   * tabbed between them too. Nothing can interleave the tab order of two
-   * sibling subtrees short of a positive tabindex, which this app does not use.
-   */
   centerSlot?: ReactNode;
 }
 
@@ -318,30 +308,14 @@ export function Navigation(props: NavigationProps) {
           top: `${bannerHeight}px`,
         }}
       >
-        {/* data-nav-obstruct: the bar owns this band of the viewport whatever
-            the page underneath it is doing, so directional navigation neither
-            leaves a focused element parked beneath it nor treats a card that
-            shares its y band as being next to it. */}
         <div
           data-nav-obstruct
           className={classNames("fixed left-0 right-0 flex items-center")}
         >
-          {/* The bar is fixed, so once the page scrolls it sits on top of
-              content that shares its y band -- and left/right geometry has no
-              way to tell the two apart. Marking it a row keeps horizontal moves
-              in the chrome; up/down still leaves it, which is how you get out. */}
           <div
             data-nav-row
             className={classNames(
-              // flex-wrap + ml-auto rather than justify-between, so that the
-              // center slot can drop onto its own full-width line below lg --
-              // which is where the search row already sat on mobile -- without
-              // the clusters following it down.
               "px-7 relative z-[60] flex flex-1 flex-wrap items-center gap-x-3 gap-y-2",
-              // The slot is taller than the icon clusters (a 56px input against
-              // 40px buttons), so an items-center row would grow and shove
-              // every icon ~8px down the page. Pinning the row to the height it
-              // already had keeps them put and centers the taller row on them.
               props.centerSlot ? "py-5 lg:h-20 lg:py-0" : "py-5",
             )}
           >
@@ -426,21 +400,11 @@ export function Navigation(props: NavigationProps) {
                 unreadCount={getUnreadCount()}
               />
             </div>
-            {/* pointer-events-auto is not optional: the container this sits in
-                is pointer-events-none, and each cluster opts back in on its
-                own. Without it the slot renders and is simply dead to the
-                mouse. order-last keeps it on its own line below lg. */}
             {props.centerSlot ? (
               <div className="pointer-events-auto order-last w-full min-w-0 lg:order-none lg:w-auto lg:flex-1">
                 {props.centerSlot}
               </div>
             ) : null}
-            {/* ml-auto, not justify-between on the row: with a center slot the
-                slot is flex-1 and eats the free space, so the auto margin
-                resolves to nothing and this sits right after it; without one
-                it pushes this cluster to the far edge exactly as before. It
-                must not be cancelled at lg -- every page but the featured home
-                has no slot and relies on it at every width. */}
             <div className="relative pointer-events-auto ml-auto flex shrink-0 items-center gap-3">
               <div className="hidden lg:block">
                 <HomeLayoutCustomizerToggle />

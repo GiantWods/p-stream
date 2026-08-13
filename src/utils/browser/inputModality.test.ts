@@ -45,8 +45,6 @@ describe("initInputModality", () => {
     expect(modality()).toBe("key");
   });
 
-  // Holding Shift swaps the player's fullscreen button for widescreen. That
-  // must not light up every focus ring on the page.
   it("ignores modifiers pressed on their own", () => {
     document.dispatchEvent(new Event("pointerdown"));
 
@@ -74,8 +72,6 @@ describe("initInputModality", () => {
     expect(modality()).toBe("key");
   });
 
-  // `gamepadconnected` fires once per controller per session, so a polling
-  // loop needs its own way to say "that was the D-pad".
   it("lets a gamepad poller re-assert keys after the mouse", () => {
     window.dispatchEvent(new Event("gamepadconnected"));
     document.dispatchEvent(new Event("pointerdown"));
@@ -124,8 +120,6 @@ describe("initInputModality", () => {
       expect(modality()).toBe("key");
     });
 
-    // A TV or gamepad user reaches a field already in key modality, and typing
-    // must not silently strip the ring they navigate by.
     it("does not undo keys the user already asserted", () => {
       press({ key: "Tab" });
       typeInto(field, "a");

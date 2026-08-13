@@ -109,22 +109,11 @@ function useMouseHoverPosition(barRef: RefObject<HTMLDivElement>) {
   return { mousePos, mouseMove, mouseLeave };
 }
 
-/**
- * Arrow-key seeking, for when the bar itself has focus.
- *
- * Scrubs a preview while the key is held and commits once on release, rather
- * than calling `setTime` per autorepeat tick: a seek per tick is a request storm
- * through hls.js, and on a TV it stalls the stream outright. The preview is the
- * same `isSeeking` + `draggingTime` pair the mouse drag already drives, so the
- * time label and the fill follow the scrub for free.
- */
 function useKeyboardScrub(duration: number, time: number) {
   const display = usePlayerStore((s) => s.display);
   const setDraggingTime = usePlayerStore((s) => s.setDraggingTime);
   const setSeeking = usePlayerStore((s) => s.setSeeking);
   const [scrubTime, setScrubTime] = useState<number | null>(null);
-  // Refs as well as state: every repeat tick has to read what the tick before it
-  // wrote, and a `setState` in this handler is not visible until the next render.
   const scrubRef = useRef<number | null>(null);
   const holdRef = useRef<{ key: string; since: number } | null>(null);
   const commitRef = useRef<{ target: number; at: number } | null>(null);
@@ -147,14 +136,8 @@ function useKeyboardScrub(duration: number, time: number) {
       if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
         return;
       }
-      // Nothing to seek through yet. Leaving the press unclaimed is deliberate —
-      // the engine can then move focus off a bar that cannot be used.
       if (duration <= 0) return;
 
-      // Claimed, so nothing else acts on the same press: the engine stands down
-      // on `defaultPrevented`, which is what keeps ← and → on the bar instead of
-      // moving focus off it sideways. ↑ and ↓ are left alone, so there is always
-      // a way out.
       event.preventDefault();
 
       const now = Date.now();
@@ -163,10 +146,6 @@ function useKeyboardScrub(duration: number, time: number) {
       }
       const step = stepForHold(now - holdRef.current.since, duration);
 
-      // Where this press starts from. Not simply `time`: `setTime` is answered by
-      // the media element on its own schedule, so for a moment after a commit the
-      // store still reports the old position — and two quick taps would land on
-      // the same place as one, the second having undone the first.
       const recent = commitRef.current;
       const from =
         scrubRef.current ??
@@ -192,8 +171,6 @@ function useKeyboardScrub(duration: number, time: number) {
     [commit],
   );
 
-  // Losing focus mid-hold is the one way a keyup never arrives. Committing is the
-  // kinder answer than dropping the scrub the user has already watched happen.
   return { scrubTime, onKeyDown, onKeyUp, onLeave: commit };
 }
 
@@ -204,9 +181,6 @@ export function ProgressBar() {
   const setSeeking = usePlayerStore((s) => s.setSeeking);
   const { isSeeking } = usePlayerStore((s) => s.interface);
   const segments = useSkipTime();
-  // Focusable only for the users who navigate with the arrows. With the engine
-  // off the player's own ←/→ are still a 5s seek, and a bar that took focus would
-  // be a second thing listening for the same key.
   const navigable = useNavigationEnabled();
   const [focused, setFocused] = useState(false);
 
@@ -243,8 +217,6 @@ export function ProgressBar() {
     time,
   );
 
-  // Where the fill and the thumbnail sit while the arrows are moving. The mouse
-  // position is the fallback, and -1 there already means "not hovering".
   const scrubPercentage =
     scrubTime !== null && duration > 0 ? (scrubTime / duration) * 100 : -1;
   const previewPercentage = scrubPercentage >= 0 ? scrubPercentage : mousePos;

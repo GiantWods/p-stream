@@ -11,12 +11,6 @@ import {
   moveFocus,
 } from "./engine";
 
-/**
- * jsdom has no layout, so rects have to be supplied. `collectFocusables`
- * rejects zero-sized elements, which is most of what jsdom would otherwise
- * hand back, and the resolver is all geometry — untouched rects would make
- * every test here vacuously pass.
- */
 function place(el: HTMLElement, x: number, y: number, w = 100, h = 40) {
   const rect = {
     x,
@@ -54,9 +48,6 @@ function keydown(key: string, init: KeyboardEventInit = {}) {
 
 beforeEach(() => {
   document.body.innerHTML = "";
-  // jsdom does not scroll, and its `scrollBy` is a stub that throws
-  // "Not implemented" into the console. Where the page ends up is
-  // `scrollIntoViewport`'s business and is tested there.
   vi.spyOn(window, "scrollBy").mockImplementation(() => {});
 });
 
@@ -80,8 +71,6 @@ describe("directionForKey", () => {
     expect(directionForKey(keydown("Tab"))).toBeNull();
   });
 
-  // Alt+Left is Back on Windows and Linux, Shift+Arrow extends a selection.
-  // Taking either would look exactly like the app breaking.
   it("declines any modified arrow", () => {
     for (const modifier of ["altKey", "ctrlKey", "metaKey", "shiftKey"]) {
       expect(
@@ -139,8 +128,6 @@ describe("moveFocus", () => {
     expect(document.activeElement).toBe(a);
   });
 
-  // Focus on <body> is where a route change leaves it. B3 owns picking an
-  // entry point; until then the honest answer is to let the browser scroll.
   it("does nothing without an origin", () => {
     const [a] = row(["a"], 0);
     document.body.append(a);
@@ -163,8 +150,6 @@ describe("moveFocus", () => {
     expect(document.activeElement).toBe(inner);
   });
 
-  // A5's registry. With a modal open, the candidates are the modal's, so a
-  // press cannot walk out into the page behind it.
   it("confines itself to the active focus scope", () => {
     const behind = button("behind", 0, 0);
     const modal = document.createElement("div");
@@ -180,8 +165,6 @@ describe("moveFocus", () => {
     expect(document.activeElement).toBe(second);
   });
 
-  // A11: for ~200ms after an overlay closes its scope is gone but its DOM is
-  // not. Without the mark, this walks into a dialog that is fading out.
   it("will not enter an overlay that is closing", () => {
     const page = button("page", 0, 0);
     const closing = document.createElement("div");
@@ -198,8 +181,6 @@ describe("moveFocus", () => {
 
   it("reports no move when the target refuses focus", () => {
     const [a, b] = row(["a", "b"], 0);
-    // Stands in for the real cases -- an element inside a closed <details>, or
-    // a subtree that went inert between collection and the focus() call.
     b.focus = () => {};
     document.body.append(a, b);
     a.focus();
@@ -209,13 +190,6 @@ describe("moveFocus", () => {
   });
 });
 
-/**
- * The container hints, through the engine rather than in isolation.
- *
- * Every test here that turns a hint on also asserts what happens with it off.
- * A hint that changes nothing is worse than no hint: it reads as a working
- * annotation in B5 while the resolver quietly ignores it.
- */
 describe("moveFocus with container hints", () => {
   function container(
     attrs: Record<string, string>,
@@ -227,15 +201,6 @@ describe("moveFocus with container hints", () => {
     return el;
   }
 
-  /**
-   * Two carousels, 5px apart, each with a far-off-screen second item.
-   *
-   * This is B5b's failure in miniature and the reason rects are not enough. From
-   * `a1`, the correct → is `a2` — the next item in the same track — but `a2` is
-   * 500px away while `b2` is 10px away and one row down, so §8.4 scores `b2`
-   * better and the user jumps tracks. Both are real, both are on screen, and no
-   * distance function tells them apart.
-   */
   function twoTracks() {
     const a1 = button("a1", 0, 0);
     const a2 = button("a2", 600, 0);
@@ -277,9 +242,6 @@ describe("moveFocus with container hints", () => {
     expect(document.activeElement).toBe(b1);
   });
 
-  // Tier 3. The row has nothing further right and neither does anything to the
-  // right of the row, so rather than dead-ending it takes the next candidate in
-  // document order — and ← from there comes straight back.
   it("falls through to document order off the end of a row, reversibly", () => {
     const [a, b] = row(["a", "b"], 0);
     const [c, d] = row(["c", "d"], 60);
@@ -295,8 +257,6 @@ describe("moveFocus with container hints", () => {
     expect(document.activeElement).toBe(b);
   });
 
-  // The fallback is containment's own escape hatch and nothing else's. An
-  // unannotated page must keep falling through to native arrow scrolling.
   it("does not fall through to document order without a container", () => {
     const [a, b] = row(["a", "b"], 0);
     document.body.append(a, b);
@@ -307,13 +267,6 @@ describe("moveFocus with container hints", () => {
   });
 
   describe("data-nav-grid", () => {
-    /**
-     * Eight cells declared as 3 columns, with a ragged last row:
-     *
-     *     0 1 2
-     *     3 4 5
-     *     6 7
-     */
     function grid() {
       const cells = Array.from({ length: 8 }, (_, i) =>
         button(`${i}`, (i % 3) * 120, Math.floor(i / 3) * 60),
@@ -345,11 +298,6 @@ describe("moveFocus with container hints", () => {
       expect(document.activeElement).toBe(cells[3]);
     });
 
-    // The column arithmetic refuses to wrap, but tier 3 then continues in
-    // document order and lands on the next row's first cell anyway — which for
-    // a grid is the conventional answer. The difference from geometry is that
-    // this is the *next* cell rather than whichever one happens to score well,
-    // and ← undoes it exactly.
     it("continues into the next row off a row's end, reversibly", () => {
       const cells = grid();
       cells[5].focus();
@@ -360,9 +308,6 @@ describe("moveFocus with container hints", () => {
       expect(document.activeElement).toBe(cells[5]);
     });
 
-    // The declared count is the whole point: geometry would put ↓ from cell 5
-    // on cell 7, which is down *and left* — a diagonal the user did not ask for.
-    // There is no cell below 5, so ↓ leaves.
     it("leaves the grid rather than moving diagonally off a ragged row", () => {
       const cells = grid();
       cells[5].focus();
@@ -402,9 +347,6 @@ describe("moveFocus with container hints", () => {
       expect(document.activeElement).toBe(second);
     });
 
-    // A hard boundary, unlike a row: no sibling escape and no document-order
-    // fallback. This is the overlay contract, and an overlay you can arrow out
-    // of is not one.
     it("will not let focus out, in any direction", () => {
       const { first } = panel();
       first.focus();
@@ -414,8 +356,6 @@ describe("moveFocus with container hints", () => {
       expect(document.activeElement).toBe(first);
     });
 
-    // Nothing prevents *entering* a marked scope — that is what makes it
-    // reachable at all. It becomes a boundary once focus is inside.
     it("can still be entered from outside", () => {
       const { outside, first } = panel();
       outside.focus();
@@ -501,16 +441,6 @@ describe("moveFocus with container hints", () => {
   });
 });
 
-/**
- * The layer split, reproduced at the rects the browser actually reported.
- *
- * A fixed nav bar owns y 0–86. `scrollIntoViewport` used to leave a focused card
- * at y 24, so the card and the bar shared a y band; the row above was off screen
- * and 130px away, the bar 24px away and also overlapping — which §8.4 reads as
- * containment and resolves without consulting distance at all. Both readings are
- * correct about the rects they were given. The rects are the problem: they
- * describe two layers as if they were one.
- */
 describe("moveFocus across positioning layers", () => {
   function bar(...children: HTMLElement[]) {
     const el = document.createElement("div");
@@ -521,8 +451,6 @@ describe("moveFocus across positioning layers", () => {
   }
 
   it("goes to the row above rather than into the chrome overlapping it", () => {
-    // Overlapping the card by 40px across and 39 down, as the nav bar's
-    // rightmost button overlapped a card the browser reported at x 1566–1762.
     const chromeButton = button("chrome", 250, 23, 40, 40);
     const above = button("above", 100, -100, 200, 80);
     const card = button("card", 100, 24, 200, 349);
@@ -543,8 +471,6 @@ describe("moveFocus across positioning layers", () => {
     expect(document.activeElement).toBe(chromeButton);
   });
 
-  // Otherwise the bar would be a trap: everything in the page below it is in a
-  // different layer, and the bar's own items are all beside each other.
   it("leaves the chrome downwards into the page", () => {
     const chromeButton = button("chrome", 100, 23, 40, 40);
     const card = button("card", 100, 200, 200, 349);
@@ -573,8 +499,6 @@ describe("moveFocus across positioning layers", () => {
     document.body.append(overlapping, above, card);
     card.focus();
 
-    // Same rects as the first case, and the old answer: an overlapping
-    // candidate in the same layer is the nesting case §8.4's first pass is for.
     expect(moveFocus("up")).toBe(true);
     expect(document.activeElement).toBe(overlapping);
   });
@@ -599,8 +523,6 @@ describe("handleNavigationKeydown", () => {
     expect(event.defaultPrevented).toBe(true);
   });
 
-  // Native arrow-key scrolling has to survive a direction with nowhere to go,
-  // or the page freezes at every edge.
   it("leaves the default alone when nothing moved", () => {
     const [a, b] = row(["a", "b"], 0);
     document.body.append(a, b);
@@ -656,9 +578,6 @@ describe("handleNavigationKeydown", () => {
       expect(document.activeElement).toBe(el);
     }
 
-    // A text field owns a caret key while the caret has somewhere to go. Given a
-    // value and a mid-string caret, or the press would be unclaimed anyway for
-    // want of anything to the left of it.
     text.value = "abc";
     text.setSelectionRange(1, 1);
     text.focus();
@@ -666,8 +585,6 @@ describe("handleNavigationKeydown", () => {
     expect(document.activeElement).toBe(text);
   });
 
-  // Otherwise arrowing up into the search bar ends the session: the field takes
-  // all four keys and a remote has nothing left to press but Back.
   it("moves off a single-line field vertically", () => {
     const text = document.createElement("input");
     place(text, 0, 0);
@@ -679,8 +596,6 @@ describe("handleNavigationKeydown", () => {
     expect(document.activeElement).toBe(target);
   });
 
-  // And sideways once the caret runs out of value, which is the state an empty
-  // search box is always in — the one the reported bug was about.
   it("moves sideways off a field whose caret has nowhere left to go", () => {
     const text = document.createElement("input");
     place(text, 0, 0);
@@ -699,8 +614,6 @@ describe("handleNavigationKeydown", () => {
     expect(document.activeElement).toBe(text);
   });
 
-  // The other half of that call. A checkbox does not mean anything by an
-  // arrow, so a D-pad user must be able to leave one.
   it("still moves off a checkbox, a radio and a button", () => {
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";

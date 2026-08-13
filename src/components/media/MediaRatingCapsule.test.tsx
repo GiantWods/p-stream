@@ -9,12 +9,6 @@ import { MediaRatingCapsule } from "@/components/media/MediaRatingCapsule";
 import { useRatingsStore } from "@/stores/ratings";
 import { FOCUSABLE_SELECTOR } from "@/utils/browser/focusables";
 
-/**
- * The capsule hides half of itself behind opacity and pointer-events, which a
- * keyboard does not respect. These cover what is reachable in each state and
- * where focus ends up when it changes.
- */
-
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
 const MEDIA = {

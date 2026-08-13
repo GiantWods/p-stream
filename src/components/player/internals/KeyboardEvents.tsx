@@ -402,19 +402,8 @@ export function KeyboardEvents() {
     const keydownEventHandler = (evt: KeyboardEvent) => {
       if (ownsKeyboardInput(evt.target)) return;
 
-      // Widget mode: the arrows are navigating the control bar, so none of the
-      // transport bindings below may fire. Blanket rather than arrows-only,
-      // because the player is a piece of UI while it lasts and a stray `k` or
-      // `<` from a keyboard shortcut landing on whatever control happens to be
-      // focused is the same class of surprise the mode exists to remove.
-      // Everything here is untouched in transport mode, which is the default.
       if (dataRef.current.widgetMode) return;
 
-      // The arrows belong to directional navigation for as long as the user has
-      // it on, in the player as much as anywhere else in the app. Widget mode
-      // alone is not enough of a guard: it is entered *by* an arrow, and the
-      // presses that do not open it — focus outside the player, or a mode that
-      // just timed out — would otherwise still land here and seek.
       if (dataRef.current.navigationEnabled && isArrowKey(evt)) return;
 
       const k = evt.key;

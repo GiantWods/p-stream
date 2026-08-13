@@ -42,8 +42,6 @@ beforeEach(() => {
 afterEach(() => {
   while (releases.length) releases.pop()!();
   document.body.innerHTML = "";
-  // The television cases below stub the user agent, and a leaked one would make
-  // every later check answer as a TV.
   vi.restoreAllMocks();
 });
 
@@ -53,8 +51,6 @@ describe("isBackKey", () => {
   });
 
   it("accepts the Tizen and webOS back codes", () => {
-    // These arrive with no usable `event.key` — Tizen reports "Unidentified" —
-    // so the code is the only thing left to match on.
     expect(isBackKey(keydown({ key: "Unidentified", keyCode: 10009 }))).toBe(
       true,
     );
@@ -81,8 +77,6 @@ describe("canGoBack", () => {
   });
 
   it("is false when there is no router state to read", () => {
-    // A page the router never stamped. Guessing "yes" here walks the user off
-    // the site from a Back button, which on a TV looks like a crash.
     window.history.replaceState(null, "");
     expect(canGoBack()).toBe(false);
   });
@@ -90,8 +84,6 @@ describe("canGoBack", () => {
 
 describe("resolveBack", () => {
   it("defers to the global handler when a modal was open", () => {
-    // The discriminating case for the capture-phase snapshot: by the time this
-    // runs, the modal is already out of the store.
     const context = snapshotBackContext(true);
     expect(resolveBack(keydown(), context)).toBe("defer");
   });
@@ -103,9 +95,6 @@ describe("resolveBack", () => {
     );
   });
 
-  // The reported bug: Escape on an ordinary page went back a route, so on a page
-  // reached from a movie it reopened the movie. Escape dismisses; it does not
-  // navigate. A remote's Back button and a controller's B still do both.
   it("leaves the route alone for the Escape key", () => {
     window.history.pushState({ idx: 1 }, "");
     expect(resolveBack(keydown(), snapshotBackContext(false))).toBe("none");
@@ -128,8 +117,6 @@ describe("resolveBack", () => {
   });
 
   it("stays put while a focus scope is live with no modal behind it", () => {
-    // A player popout, or an overlay mid-transition. Changing route under one
-    // is not a Back the user asked for.
     window.history.pushState({ idx: 1 }, "");
     openScope();
 

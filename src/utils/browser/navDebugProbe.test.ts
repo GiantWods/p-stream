@@ -6,12 +6,6 @@ import { readContainer } from "@/utils/navigation/containers";
 import { pushScope } from "./focusScopes";
 import { describeContainer, dumpRects, measure } from "./navDebugProbe";
 
-/**
- * jsdom has no layout, so every rect is 0x0 and `collectFocusables` would drop
- * the lot. Giving each element its rect by hand is fine here: what is under
- * test is the shape and ordering of the dump, not the geometry — the geometry
- * comes from a real browser via `scripts/website-navrects.mjs`.
- */
 function place(el: HTMLElement, x: number, y: number, w: number, h: number) {
   const rect = {
     x,
@@ -71,8 +65,6 @@ describe("dumpRects", () => {
     });
   });
 
-  // The whole point of the dump is that the fixtures are stable enough to
-  // commit; subpixel jitter across captures would otherwise churn them.
   it("rounds to 2dp", () => {
     document.body.append(button("a", 10.123456, 20.987654, 30.5, 40.005));
 
@@ -101,8 +93,6 @@ describe("dumpRects", () => {
     expect(dumpRects().rects[0].label).toBe("Watch now");
   });
 
-  // A dump taken with a modal open has to describe the modal, not the page
-  // behind it, or B1's fixture for the details modal is really a Home fixture.
   it("follows the active focus scope", () => {
     const page = button("behind", 0, 0);
     const modal = document.createElement("div");
@@ -135,11 +125,6 @@ describe("dumpRects", () => {
   });
 });
 
-/**
- * B4's half of the probe. A container hint that was never picked up navigates
- * fine and lands slightly wrong, so the only way to check an annotation is to
- * read back what the resolver resolved.
- */
 describe("describeContainer", () => {
   function read(html: string) {
     document.body.innerHTML = html;
@@ -154,8 +139,6 @@ describe("describeContainer", () => {
     expect(describeContainer(read(`<div data-nav-scope></div>`))).toBe("scope");
   });
 
-  // The typo this exists to catch: `data-nav-grid="auto"` still confines both
-  // axes but has no column count, so it silently falls back to geometry.
   it("shows a grid that gave no usable column count", () => {
     expect(describeContainer(read(`<div data-nav-grid="auto"></div>`))).toBe(
       "grid ?",

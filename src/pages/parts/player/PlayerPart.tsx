@@ -52,9 +52,6 @@ export function PlayerPart(props: PlayerPartProps) {
   const [isHoldingFullscreen, setIsHoldingFullscreen] = useState(false);
   const holdTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Holding Shift swaps the fullscreen button for the widescreen one. These
-  // have to live in an effect: bound during render they were re-added on
-  // every re-render and never removed.
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Shift") {
@@ -203,9 +200,6 @@ export function PlayerPart(props: PlayerPartProps) {
             </>
           ) : null}
         </div>
-        {/* Where OK lands: the first candidate inside is play/pause, which is
-            what a remote's centre button is expected to reach. Marked here
-            rather than on the button itself, which renders three times. */}
         <div
           data-nav-first
           className="hidden lg:flex justify-between"

@@ -10,10 +10,6 @@ export function Card(props: {
   className?: string;
   onClick?: () => void;
 }) {
-  // A clickable card was a div with an onClick and nothing else, so onboarding's
-  // only real choices could not be reached by Tab, let alone by a remote — and
-  // it is the first thing a new user sees. Enter handled the same way as every
-  // other hand-rolled activation here: see the note in LinksDropdown.
   return (
     <div
       className={classNames(

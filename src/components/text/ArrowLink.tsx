@@ -59,8 +59,6 @@ export function ArrowLink(props: ArrowLinkProps) {
         {content}
       </LinkRouter>
     );
-  // No href to hang behaviour off, so this branch has to spell out what the
-  // other two get from the browser: a tab stop and Enter/Space activation.
   return (
     <span
       className="tabbable"

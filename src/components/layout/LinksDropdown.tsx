@@ -245,9 +245,6 @@ export function LinksDropdown(props: { children: React.ReactNode }) {
   );
   const isDesktopApp = useIsDesktopApp();
 
-  // Escape closes the menu and hands focus back to the pill. Without it the
-  // scope below has no exit on a remote, and Escape would go back a route
-  // instead -- leaving the menu open over a page the user never asked for.
   return (
     <div
       className="relative is-dropdown"
@@ -266,12 +263,6 @@ export function LinksDropdown(props: { children: React.ReactNode }) {
         )}
         tabIndex={0}
         onClick={toggleOpen}
-        // keydown, not keyup, and it marks the event handled. Directional
-        // navigation activates a focused [tabindex] element by synthesizing a
-        // click on it; an element that also toggles on keyup would open on the
-        // synthesized click and close again on the release, which looks like
-        // Enter doing nothing at all. `!repeat` keeps a held key to one toggle,
-        // which is what keyup gave for free.
         onKeyDown={(evt) => {
           if (evt.key !== "Enter" || evt.repeat) return;
           evt.preventDefault();

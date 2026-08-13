@@ -1,19 +1,3 @@
-/**
- * Putting focus back after the focused element is destroyed under it.
- *
- * Deleting a bookmark, a search re-render, a carousel swapping pages: the
- * element focus was on leaves the DOM and focus silently falls to `<body>`.
- * A mouse user never notices. Someone driving with a D-pad has just lost their
- * place on the page and, since directional navigation needs an origin, has no
- * key left that does anything.
- *
- * The awkward part is that afterwards the element cannot answer where it *was*.
- * React detaches whichever node the removal starts at, so walking up from the
- * element stops there — and when the element itself is that node,
- * `parentElement` is null outright. Everything needed has to be read while it
- * is still connected, which is what {@link rememberFocus} is for.
- */
-
 import { noteKeyModality } from "@/utils/browser/inputModality";
 
 import { collectNavigationCandidates, focusCandidate } from "./engine";
@@ -47,8 +31,6 @@ function centreDistance(a: NavRect, b: NavRect): number {
 
 /** {@link recoverFocus} minus the ring. Split only so the ring is unmissable. */
 function placeFocus(origin: FocusOrigin): boolean {
-  // It never left, or something already put focus somewhere valid. Either way
-  // this is not a recovery, and moving focus would be the bug.
   if (origin.el.isConnected) return false;
 
   for (let i = 0; i < origin.chain.length; i += 1) {
@@ -80,26 +62,6 @@ function placeFocus(origin: FocusOrigin): boolean {
   return focusEntryPoint();
 }
 
-/**
- * Moves focus to the nearest survivor of `origin`. Returns whether it landed.
- *
- * Widens one ancestor at a time, so a deleted bookmark hands focus to another
- * bookmark before it will consider the page chrome. Within a level the nearest
- * candidate by centre wins — plain euclidean, not B1's directional function,
- * because there is no direction here: the user did not press anything, and the
- * honest answer is "whatever was closest to the thing that vanished".
- *
- * The entry point is the last resort, and returning false after that is a real
- * outcome rather than a failure — an empty page has nowhere to put focus, and
- * leaving it on `<body>` keeps native scrolling working.
- *
- * Landing anywhere also turns the focus ring on. Nothing else can: the ring
- * follows the last input the user made, and clicking a button that then destroys
- * itself — the settings Save bar is the reported case — leaves that reading
- * "pointer", so focus arrives somewhere the user never clicked with nothing to
- * show where. Measured as `outline-style: none` on the recovered control, which
- * is indistinguishable from having lost focus altogether.
- */
 export function recoverFocus(origin: FocusOrigin): boolean {
   if (!placeFocus(origin)) return false;
   noteKeyModality();

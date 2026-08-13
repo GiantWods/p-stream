@@ -13,14 +13,6 @@ import { WIDGET_IDLE_MS } from "@/utils/navigation/playerMode";
 
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
-/**
- * The player root, composed exactly as `Container.tsx` composes it.
- *
- * The attribute swap is the whole mechanism, so the harness renders it rather
- * than asserting on the hook's return value alone: `data-nav-skip` is what keeps
- * the controls out of the candidate census in transport mode, and it is also
- * what makes the blur on the way out safe.
- */
 function Harness() {
   const ref = useRef<HTMLDivElement | null>(null);
   const widgetMode = usePlayerWidgetMode(ref);
@@ -108,8 +100,6 @@ beforeEach(() => {
   vi.spyOn(navigator, "userAgent", "get").mockReturnValue(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/126.0.0.0 Safari/537.36",
   );
-  // jsdom lays nothing out, and `isFocusableVisible` drops zero-size elements
-  // — without a rect the control bar has no candidates at all.
   vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(RECT);
   vi.spyOn(Element.prototype, "getClientRects").mockReturnValue([
     RECT,
@@ -132,8 +122,6 @@ afterEach(() => {
 });
 
 describe("transport mode", () => {
-  // The default, and the only state the existing player is ever in. Pressing OK
-  // in it has to keep doing nothing, and the root has to keep saying "stay out".
   it("is what the player mounts in, with the preference off", () => {
     mount();
 
@@ -150,8 +138,6 @@ describe("transport mode", () => {
     expect(event.defaultPrevented).toBe(false);
   });
 
-  // The arrows are the player's own while the engine is off: ←/→ are a locked 5s
-  // seek and ↑/↓ are volume, and nobody who has not opted in loses either.
   it.each(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"])(
     "leaves %s to transport while dormant",
     (key) => {
@@ -190,8 +176,6 @@ describe("widget mode", () => {
     expect(player()!.hasAttribute("data-nav-scope")).toBe(true);
   });
 
-  // The reported bug: with the engine on, an arrow in the player seeked instead
-  // of navigating, because OK was the only way in and nothing said so.
   it.each(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"])(
     "opens on %s, and claims the press so nothing seeks on it",
     (key) => {
@@ -205,8 +189,6 @@ describe("widget mode", () => {
     },
   );
 
-  // The press that opens the mode is spent on opening it. Moving as well would
-  // mean stepping away from an entry point that has not been chosen yet.
   it("does not also take a step on the arrow that opened it", () => {
     mount();
 
@@ -215,10 +197,6 @@ describe("widget mode", () => {
     expect(document.activeElement?.id).toBe("pause");
   });
 
-  // A mouse user who clicked Pause. `canEnterWidgetMode` refuses this state on
-  // purpose for OK — the button activates on that press — but an arrow has no
-  // second meaning to collide with, and refusing it is what left the arrows
-  // seeking for the rest of the session.
   it("opens on an arrow even with focus already on a control", () => {
     mount();
     const pause = host.querySelector<HTMLElement>("#pause")!;
@@ -230,9 +208,6 @@ describe("widget mode", () => {
     expect(event.defaultPrevented).toBe(true);
   });
 
-  // A field in the settings popout, clicked into with a mouse. It keeps the keys
-  // that move its caret, and gives back the ones that cannot — the same rule the
-  // engine applies to every other field in the app.
   it("leaves a field the arrow that moves its caret", () => {
     mount();
     const input = document.createElement("input");
@@ -260,8 +235,6 @@ describe("widget mode", () => {
     expect(event.defaultPrevented).toBe(true);
   });
 
-  // The mode with focus still on `<body>` is a player where every arrow does
-  // nothing, which is indistinguishable from a frozen page.
   it("puts focus on the marked control", () => {
     mount();
     press("Enter");
@@ -280,8 +253,6 @@ describe("widget mode", () => {
     expect(player()!.hasAttribute("data-nav-skip")).toBe(true);
   });
 
-  // Focus left on a control leaves a ring on screen over the film, and the
-  // control unmounts a frame later anyway.
   it("takes focus off the controls on the way out", () => {
     mount();
     press("Enter");
@@ -330,9 +301,6 @@ describe("widget mode", () => {
     expect(isWidgetMode()).toBe(false);
   });
 
-  // What makes the idle fallback harmless now. Before the arrows could open the
-  // mode, the first press after a timeout went to transport and seeked, which
-  // read as the player randomly jumping five seconds.
   it("re-opens on an arrow after it has timed out", () => {
     vi.useFakeTimers();
     mount();
@@ -369,9 +337,6 @@ describe("widget mode", () => {
     vi.useFakeTimers();
     mount();
     press("Enter");
-    // Two acts, not one: the timer has to be disarmed by the commit that opens
-    // the popout, and inside a single act the clock would advance before React
-    // had run the effect.
     act(() => {
       usePlayerStore.setState((s) => {
         s.interface.hasOpenOverlay = true;
@@ -384,8 +349,6 @@ describe("widget mode", () => {
     expect(isWidgetMode()).toBe(true);
   });
 
-  // The player store is a module-level singleton, so a mode left on would still
-  // be on the next time anyone opened anything.
   it("resets when the player unmounts", () => {
     mount();
     press("Enter");
@@ -396,8 +359,6 @@ describe("widget mode", () => {
     expect(isWidgetMode()).toBe(false);
   });
 
-  // Nothing turns the engine off mid-session today, but the preference can be
-  // flipped, and half a mode is worse than either.
   it("collapses back to transport if the engine is turned off under it", () => {
     mount();
     press("Enter");

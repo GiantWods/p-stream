@@ -28,26 +28,8 @@ import {
   rememberFocus,
 } from "@/utils/navigation/recovery";
 
-/**
- * How long to keep trying to put focus somewhere on a freshly rendered route.
- *
- * The first frame after a navigation is usually empty — every data-driven page
- * here renders its skeleton first, and the lazy routes render literally nothing
- * until their chunk arrives. One attempt would therefore miss on exactly the
- * pages that matter most. Bounded because the alternative is an observer that
- * can steal focus arbitrarily far into a session, and because a page with
- * nothing focusable after half a second has nothing focusable.
- */
 const ENTRY_DEADLINE_MS = 500;
 
-/**
- * What is focused right now, for recovery to measure a disappearance against.
- *
- * Needed because `focusin` only reports focus *changing*: an element that was
- * already focused when the engine started — someone turns the preference on, or
- * picks up a controller — would never be announced, and its removal would go
- * unnoticed.
- */
 function focusedOrigin(): FocusOrigin | null {
   const active = document.activeElement;
   if (!(active instanceof HTMLElement)) return null;
@@ -55,24 +37,6 @@ function focusedOrigin(): FocusOrigin | null {
   return rememberFocus(active);
 }
 
-/**
- * Whether directional navigation should be running at all.
- *
- * The stored preference is the gate for everyone who has a choice, and it is
- * off by default. The two overrides below do not consult it, because on those
- * inputs there is nothing to opt in with:
- *
- * - **A television.** No pointer and no Tab key; the settings screen that
- *   holds the preference is itself unreachable without arrows.
- * - **A gamepad.** Same problem the moment someone picks up a controller, and
- *   `gamepadconnected` is the only reliable signal — `navigator.getGamepads()`
- *   reports nothing until the user presses a button, so the initial read is
- *   empty even with a controller plugged in.
- *
- * Both are one-way. Nothing here turns the engine back off, because a TV does
- * not stop being a TV and a controller put down for a minute is still the
- * thing the user is holding.
- */
 export function useNavigationEnabled(): boolean {
   const preference = usePreferencesStore((s) => s.spatialNavigation);
   const gamepadSeen = useGamepadSeen();
@@ -80,21 +44,11 @@ export function useNavigationEnabled(): boolean {
   return preference === "on" || gamepadSeen || isTvBrowser();
 }
 
-/**
- * Mounts the directional navigation engine. Call once, from `App`.
- *
- * With the engine dormant there is no listener at all, rather than a listener
- * that returns early — so "the preference is off" and "this code was never
- * merged" are the same thing from the outside, which is the only version of
- * this that is safe to put in front of the existing website.
- */
 export function useSpatialNavigation() {
   const enabled = useNavigationEnabled();
   const location = useLocation();
   const getTopModal = useOverlayStack((s) => s.getTopModal);
 
-  // Read through a ref so flipping the preference does not detach and
-  // reattach the listener on a path where it stays enabled either way.
   const enabledRef = useRef(enabled);
   enabledRef.current = enabled;
 
@@ -106,13 +60,6 @@ export function useSpatialNavigation() {
       handleNavigationKeydown(event, isEnabled);
     };
 
-    // Two things that are only answerable before the event reaches React.
-    //
-    // The back context is what the bubble phase will not be able to see any
-    // more: the global Escape handler is registered before this one and has
-    // already emptied the modal stack by then. See `back.ts`. A dropdown's
-    // arrow keys are the same problem one layer down — Headless UI opens the
-    // menu from a React prop, so by the bubble phase it is already open.
     let backContext: BackContext = snapshotBackContext(false);
     const onCaptureKeyDown = (event: KeyboardEvent) => {
       if (handleDropdownKeydown(event, isEnabled)) return;
@@ -126,8 +73,6 @@ export function useSpatialNavigation() {
       if (!isBackKey(event)) return;
       if (!isEnabled()) return;
 
-      // The player owns its own Escape (exit fullscreen, close a popout) and
-      // must not also lose a route.
       if (event.target instanceof Element && isNavSkipped(event.target)) return;
 
       if (resolveBack(event, backContext) === "history") {
@@ -135,15 +80,6 @@ export function useSpatialNavigation() {
       }
     };
 
-    // Bubble phase, so anything with an opinion about this key has already
-    // had it — the engine checks `defaultPrevented` and stands down. For
-    // activation that is not a preference but a requirement: see A9.
-    //
-    // Note this does *not* protect against the player, whose own `window`
-    // listener registers later than this one and therefore runs after it. The
-    // player root carries `data-nav-skip` for that reason; ordering between
-    // two `window` listeners is registration order, which is not something to
-    // build a guarantee on.
     window.addEventListener("keydown", onWindowKeyDown);
     document.addEventListener("keydown", onCaptureKeyDown, true);
     document.addEventListener("keydown", onDocumentKeyDown);
@@ -154,24 +90,8 @@ export function useSpatialNavigation() {
     };
   }, [enabled, getTopModal]);
 
-  // Focus recovery, from two signals, because neither one covers it alone.
-  //
-  // `focusout` catches focus *moving*, while the outgoing element is still
-  // connected — the only moment its position in the tree can be read. What it
-  // does not reliably catch is focus being destroyed. Removing the focused
-  // element is not required to report anything: jsdom names `<body>` as the
-  // target rather than the element that left, and where a browser does name the
-  // element it can arrive a frame or more before the node is actually detached,
-  // which reads as "it survived". The settings save bar closing under its own
-  // Save button is that case, and it left focus on `<body>`.
-  //
-  // So the removal is watched for directly as well, against a snapshot taken on
-  // the way in. That signal has no timing to get wrong: it fires when the node
-  // leaves the document, which is exactly the question being asked.
   useEffect(() => {
     if (!enabled) return;
-    // Where focus is now, read while it is still readable. Afterwards the
-    // element cannot answer where it was — see `recovery.ts`.
     let current: FocusOrigin | null = focusedOrigin();
     // The origin whose survival the next frame has to judge.
     let pending: FocusOrigin | null = null;
@@ -184,8 +104,6 @@ export function useSpatialNavigation() {
         const origin = pending;
         pending = null;
         if (origin === null) return;
-        // Focus moved somewhere real — a normal Tab press, or a click. Only an
-        // element that vanished leaves it on `<body>`.
         if (!needsEntryPoint()) return;
         recoverFocus(origin);
       });
@@ -206,8 +124,6 @@ export function useSpatialNavigation() {
       check();
     };
 
-    // Every mutation in the app runs this, so it stays two reads long: a focus
-    // that is still in the tree is the answer almost every time.
     const observer = new MutationObserver(() => {
       if (current === null || current.el.isConnected) return;
       pending = current;
@@ -226,10 +142,6 @@ export function useSpatialNavigation() {
     };
   }, [enabled]);
 
-  // Focus memory for `data-nav-remember`. `focusCandidate` already records its
-  // own moves; this is the other half — a click or a Tab press is just as much
-  // "where I was in this carousel" as an arrow key is, and a container that only
-  // remembers arrow-key visits sends the user back to a stale card.
   useEffect(() => {
     if (!enabled) return;
 
@@ -242,8 +154,6 @@ export function useSpatialNavigation() {
     return () => document.removeEventListener("focusin", onFocusIn);
   }, [enabled]);
 
-  // Route entry points. Only ever acts when focus is nowhere, so a navigation
-  // triggered from a control the user is still on does not yank them off it.
   useEffect(() => {
     if (!enabled) return;
     const deadline = Date.now() + ENTRY_DEADLINE_MS;

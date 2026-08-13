@@ -16,18 +16,6 @@ import { MediaItem } from "@/utils/media/mediaTypes";
 
 import "@/setup/i18n";
 
-/**
- * A card's keyboard behaviour is split across two elements — focus on the
- * inner styled element, navigation on the outer <Link> — and nothing about
- * that split is visible to a mouse. These tests exist so that breaking it
- * fails here rather than in someone's hands.
- *
- * Rendered with `createRoot` directly. There is no testing-library in this
- * project and adding one for two tests is not worth a dependency.
- */
-
-// What testing-library would otherwise set for us. Without it React warns on
-// every `act` call that the environment does not support it.
 (globalThis as any).IS_REACT_ACT_ENVIRONMENT = true;
 
 const MOVIE: MediaItem = {
@@ -69,8 +57,6 @@ function pressEnter(el: HTMLElement, init: KeyboardEventInit = {}): boolean {
 }
 
 beforeEach(() => {
-  // jsdom has no IntersectionObserver, and the card lazy-loads its poster
-  // through one.
   vi.stubGlobal(
     "IntersectionObserver",
     vi.fn(() => ({
@@ -82,8 +68,6 @@ beforeEach(() => {
   usePreferencesStore.setState({
     enableMinimalCards: false,
     enableDetailsModal: false,
-    // Skips the Flare light layer, which only adds a mousemove listener and
-    // some absolutely positioned divs.
     enableLowPerformanceMode: true,
   });
   container = document.createElement("div");
@@ -104,9 +88,6 @@ describe("MediaCard skeleton", () => {
   });
 
   it("contributes no focus candidates through forceSkeleton either", () => {
-    // The path every carousel uses while its data is in flight. A skeleton
-    // that could take focus would lose it moments later, because the carousels
-    // replace the whole skeleton array with a differently keyed one.
     render(<MediaCard linkable media={MOVIE} forceSkeleton />);
     expect(container.querySelectorAll(FOCUSABLE_SELECTOR)).toHaveLength(0);
   });
@@ -125,8 +106,6 @@ describe("MediaCard keyboard activation", () => {
     render(<MediaCard linkable media={MOVIE} />);
     const host = focusHost();
     expect(host.closest("a")).not.toBeNull();
-    // The group class is what the hover styling and the focus mirror are
-    // written against, so focus has to land on the element carrying it.
     expect(host.classList.contains("group")).toBe(true);
   });
 
@@ -157,9 +136,6 @@ describe("MediaCard keyboard activation", () => {
   });
 
   it("marks the Enter it handled, and only that one", () => {
-    // Directional navigation activates a focused [tabindex] element by
-    // synthesizing a click. This is how it can tell the card got there first
-    // and skip it, rather than activating the card twice.
     render(<MediaCard linkable media={MOVIE} />);
     const host = focusHost();
 
@@ -183,8 +159,6 @@ describe("MediaCard keyboard activation", () => {
   });
 
   it("leaves Enter on the buttons inside it to those buttons", () => {
-    // Keydown bubbles up from them. Handling it here cancelled their own native
-    // activation, so OK on "more info" opened the title instead of its details.
     render(<MediaCard linkable media={MOVIE} onShowDetails={() => {}} />);
     const link = container.querySelector("a")!;
     const clicks = vi.fn();
@@ -196,19 +170,11 @@ describe("MediaCard keyboard activation", () => {
   });
 
   it("does not offer a card that cannot be linked as a focus candidate", () => {
-    // Unreleased media renders as a card but goes nowhere, so the card itself
-    // is not a target. Its "more info" button still is.
     render(<MediaCard linkable media={{ ...MOVIE, year: 2999 }} />);
     expect(container.querySelector('[tabindex="0"]')).toBeNull();
   });
 });
 
-/**
- * A card is two candidates, not one: the ellipsis sits inside the card's own
- * rect, at its bottom edge. Geometry therefore hands it every → and every ↓
- * pressed from the card, in every grid and carousel in the app. The cell
- * declares one column so that sideways skips it and vertical reaches it.
- */
 describe("MediaCard as a navigation cell", () => {
   function cell(): HTMLElement {
     const el = container.querySelector<HTMLElement>('[data-nav-grid="1"]');
@@ -227,8 +193,6 @@ describe("MediaCard as a navigation cell", () => {
   });
 
   it("marks the cell on a card that cannot be linked too", () => {
-    // Only one candidate here, and the arithmetic has to survive that: a single
-    // column of one has nowhere to go in any direction, which is correct.
     render(<MediaCard linkable media={{ ...MOVIE, year: 2999 }} />);
     expect(cell().querySelectorAll(FOCUSABLE_SELECTOR)).toHaveLength(1);
   });
@@ -248,13 +212,6 @@ describe("MediaBookmarkButton", () => {
   });
 });
 
-/**
- * dnd-kit puts `tabIndex={0}` and `role="button"` on its draggable node so that
- * a keyboard sensor has something to grab. BookmarksGrid registers
- * `PointerSensor` alone, so there is no keyboard drag to grab it with — and the
- * node wraps the card, so it is the one focus reaches first. Every card in the
- * app carried a focus stop that did nothing when activated.
- */
 describe("WatchedMediaCard", () => {
   it("adds no focus stop of its own around the card", () => {
     render(<WatchedMediaCard media={MOVIE} onShowDetails={() => {}} />);
@@ -263,8 +220,6 @@ describe("WatchedMediaCard", () => {
     );
 
     expect(candidates).toHaveLength(2);
-    // Whatever the wrapper is, it is not one of them, and it is not announced
-    // as a control either.
     const wrapper = container.firstElementChild as HTMLElement;
     expect(wrapper.matches(FOCUSABLE_SELECTOR)).toBe(false);
     expect(wrapper.getAttribute("role")).toBeNull();

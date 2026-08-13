@@ -30,11 +30,6 @@ function grid(cols: number, rows: number, w = 200, h = 120, gap = 20) {
   return out;
 }
 
-// The formula is checked against numbers worked by hand rather than against
-// whatever the implementation happens to return, because everything below only
-// observes it through an arg-min — a formula that is wrong by a constant
-// factor still picks the right neighbour on a tidy grid and falls apart on a
-// real page.
 describe("navigationDistance", () => {
   it("matches §8.4 for a straight horizontal move", () => {
     const origin = rect(0, 0, 100, 40);
@@ -50,9 +45,6 @@ describe("navigationDistance", () => {
     expect(navigationDistance(origin, target, "down")).toBe(195);
   });
 
-  // The spec's 30-vs-2 orthogonal weighting is the reason ← → stay inside a
-  // row while ↑ ↓ are free to change column. The same 100px sideways drift
-  // costs 3000 on a horizontal move and 200 on a vertical one.
   it("punishes drifting off a row 15x harder than drifting off a column", () => {
     const origin = rect(0, 0, 100, 100);
     const skew = (Math.sqrt(2) - 1) * 100 + 5; // euclidean + lost alignment
@@ -78,8 +70,6 @@ describe("navigationDistance", () => {
 
   it("measures edge to edge, not centre to centre", () => {
     const origin = rect(0, 0, 100, 40);
-    // A very wide box starting at the same place: its centre is 450px further
-    // away, its near edge is not, and only the near edge should count.
     const narrow = navigationDistance(origin, rect(200, 0, 100, 40), "right");
     const wide = navigationDistance(origin, rect(200, 0, 1000, 40), "right");
     expect(wide).toBe(narrow);
@@ -128,9 +118,6 @@ describe("pickCandidate — uniform grid", () => {
 });
 
 describe("pickCandidate — ragged grid", () => {
-  // Three rows that do not line up: 3 wide cells, then 4 narrow ones, then 2
-  // very wide. This is Discover, roughly — carousels of different item counts
-  // stacked on each other.
   const row0 = [
     rect(0, 0, 300, 100),
     rect(320, 0, 300, 100),
@@ -146,8 +133,6 @@ describe("pickCandidate — ragged grid", () => {
   const cells = [...row0, ...row1, ...row2];
 
   it("drops onto the cell below with the most column in common", () => {
-    // row0[1] spans 320-620; row1[1] spans 240-460 (140 shared), row1[2] spans
-    // 480-700 (140 shared) — a real tie on overlap, broken by document order.
     expect(pickCandidate(row0[1], cells, "down")).toBe(4);
     // row0[0] spans 0-300, wholly over row1[0] and row1[1]'s left half.
     expect(pickCandidate(row0[0], cells, "down")).toBe(3);
@@ -168,16 +153,12 @@ describe("pickCandidate — ragged grid", () => {
   });
 
   it("keeps ← → inside the row even when the row above is closer", () => {
-    // row1[1] is 20px from row1[2] horizontally and 20px from row0 vertically.
-    // The orthogonal weight is what stops → from leaving for row0.
     expect(pickCandidate(row1[1], cells, "right")).toBe(5);
     expect(pickCandidate(row1[1], cells, "left")).toBe(3);
   });
 });
 
 describe("pickCandidate — one wide element spanning a row", () => {
-  // The search bar over the first carousel: full width, and every card below
-  // is inside its horizontal span.
   const searchBar = rect(0, 0, 1000, 60);
   const cards = [
     rect(0, 100, 220, 300),
@@ -188,10 +169,6 @@ describe("pickCandidate — one wide element spanning a row", () => {
   const cells = [searchBar, ...cards];
 
   it("drops from the wide element onto the first card, not the middle one", () => {
-    // Every card is fully inside the bar's span, so orthogonal distance,
-    // displacement and alignment are identical for all four — a four-way tie
-    // that document order settles. Landing anywhere else would mean the
-    // resolver is scoring centres.
     expect(pickCandidate(searchBar, cells, "down")).toBe(1);
   });
 
@@ -208,8 +185,6 @@ describe("pickCandidate — one wide element spanning a row", () => {
 });
 
 describe("pickCandidate — nested elements", () => {
-  // A focusable card wrapping two focusable buttons, which is what a card with
-  // a bookmark toggle looks like once both are in the tab order.
   const card = rect(0, 0, 300, 200);
   const play = rect(20, 120, 100, 40);
   const save = rect(140, 120, 100, 40);
@@ -229,9 +204,6 @@ describe("pickCandidate — nested elements", () => {
     expect(pickCandidate(save, cells, "right")).toBe(3);
   });
 
-  // An overlapping candidate is decided by which one starts soonest, never by
-  // distance: a big overlap earns a big sqrt(overlap) bonus, so scoring these
-  // would make the *widest* overlapping box win regardless of where it sits.
   it("prefers the nearer overlap to the larger one", () => {
     const origin = rect(0, 0, 100, 100);
     const nearer = rect(10, 10, 20, 20);
@@ -240,8 +212,6 @@ describe("pickCandidate — nested elements", () => {
   });
 
   it("will not go up into a box that merely contains the origin", () => {
-    // The card starts above `play`, but `up` out of a child into its own
-    // parent is a move the user cannot see happening.
     expect(pickCandidate(play, [card, play, save], "up")).toBeNull();
   });
 });
@@ -258,9 +228,6 @@ describe("pickCandidate — tall sidebar beside a grid", () => {
   const cells = [sidebar, ...content];
 
   it("enters the grid at the top of the nearest column", () => {
-    // All four content boxes sit inside the sidebar's 800px vertical span, so
-    // orthogonal distance is 0 for all of them; the near column wins on
-    // euclidean, and the tie inside it goes to document order.
     expect(pickCandidate(sidebar, cells, "right")).toBe(1);
   });
 

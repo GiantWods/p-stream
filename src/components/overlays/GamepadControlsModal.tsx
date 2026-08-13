@@ -131,8 +131,6 @@ export function GamepadControlsModal({ id }: GamepadControlsModalProps) {
                 "Configure your Xbox or PlayStation controller button mappings",
               )}
             </p>
-            {/* The navigate actions used to be listed here as remappable no-ops.
-                They do something now, and the two mappings need saying. */}
             <p className="text-type-secondary text-sm mt-2">
               {t(
                 "settings.preferences.gamepadControlsNavigationNote",

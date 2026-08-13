@@ -32,9 +32,6 @@ describe("resolveGamepadMapping", () => {
     expect(mapping.dpadUp).toBe("navigate-up");
   });
 
-  // `GamepadControlsModal` saves every button, not just the changed ones, so a
-  // plain spread over the player table would drag the general D-pad defaults in
-  // with it and put the player's arrows back on focus movement.
   it("ignores a saved entry that is only the general default", () => {
     const saved = { ...DEFAULT_GAMEPAD_MAPPING } as Record<string, string>;
 
@@ -154,9 +151,6 @@ describe("useGamepadPolling", () => {
     expect(actions.mock.calls).toEqual([["navigate-up"], ["navigate-up"]]);
   });
 
-  // The loop used to `break` after the first entry, so a controller in any other
-  // slot was invisible — and `navigator.getGamepads()` pads its array with nulls,
-  // so slot 0 being empty is the normal case for a second controller.
   it("hears a controller that is not in the first slot", () => {
     mount();
     pads = [null, pad(1, [BUTTON.ACTION_SOUTH])];
@@ -166,9 +160,6 @@ describe("useGamepadPolling", () => {
     expect(actions.mock.calls).toEqual([["confirm"]]);
   });
 
-  // The edge state used to be one map keyed by button index alone, shared by
-  // every pad. Pad 1 reporting a button up overwrote pad 0's record of holding
-  // the same button down, so pad 0's next real press read as already-down.
   it("keeps each controller's edge state to itself", () => {
     mount();
     pads = [pad(0, [BUTTON.ACTION_SOUTH]), pad(1, [])];

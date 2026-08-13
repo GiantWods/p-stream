@@ -73,8 +73,6 @@ export function MediaRatingCapsule({ media }: MediaRatingCapsuleProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [expanded]);
 
-  // Focus follows the capsule as it opens and closes, or it is left on a button
-  // that just faded out.
   useEffect(() => {
     if (!containerRef.current?.contains(document.activeElement)) return;
     if (!expanded) {
@@ -100,8 +98,6 @@ export function MediaRatingCapsule({ media }: MediaRatingCapsuleProps) {
     <div
       ref={containerRef}
       className={classNames(
-        // The clip is what animates the width; it also cuts off the focus ring
-        // of whatever is focused inside, so it lifts while focus is in here.
         "relative flex h-12 items-center overflow-hidden focus-within:overflow-visible rounded-full bg-buttons-secondary transition-[width,transform] duration-300 ease-out",
         expanded ? "" : "focus-grow w-12 hover:scale-110",
       )}

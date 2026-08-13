@@ -31,14 +31,6 @@ function button(label: string, x: number, y: number, w = 100, h = 40) {
 
 let clicks: string[] = [];
 
-/**
- * The shape `Dropdown` renders: a marked wrapper, the trigger Headless UI tags
- * with `aria-haspopup`, and — only while open — the options list, which is what
- * takes focus.
- *
- * The trigger's click closes it, the way Headless UI's own does, so the tests can
- * assert on the effect rather than on the call.
- */
 function dropdown(x: number, y: number, open: boolean) {
   const root = document.createElement("div");
   root.setAttribute("data-nav-dropdown", "");
@@ -67,11 +59,6 @@ function dropdown(x: number, y: number, open: boolean) {
   return { root, trigger, options };
 }
 
-/**
- * Dispatches a real event, because the mechanism under test is propagation:
- * the handler answers a press by stopping it before Headless UI or the engine
- * can see it, and only a real dispatch can tell whether that worked.
- */
 function press(el: HTMLElement, key: string, init: KeyboardEventInit = {}) {
   const event = new KeyboardEvent("keydown", {
     key,
@@ -83,10 +70,6 @@ function press(el: HTMLElement, key: string, init: KeyboardEventInit = {}) {
   return event;
 }
 
-/**
- * Stands in for both listeners downstream of the capture phase: Headless UI's
- * opener, on the root container, and the engine's, on `window`.
- */
 let reachedBubble: string[] = [];
 let stop: () => void;
 
@@ -145,8 +128,6 @@ describe("handleDropdownKeydown, closed", () => {
     expect(document.activeElement).toBe(below);
   });
 
-  // The engine handles these itself and Headless UI ignores them, so claiming
-  // them here would be one more thing that has to stay in step with the engine.
   it("leaves sideways moves to the engine", () => {
     const { trigger } = dropdown(200, 0, false);
     document.body.appendChild(button("Left", 0, 0));
@@ -158,8 +139,6 @@ describe("handleDropdownKeydown, closed", () => {
     expect(document.activeElement).toBe(trigger);
   });
 
-  // Nowhere to go is not the same as answered: the arrow still has to reach the
-  // browser, or a dropdown at the end of a page stops the page scrolling.
   it("does not claim a move with nowhere to go", () => {
     const { trigger } = dropdown(0, 0, false);
 
@@ -226,8 +205,6 @@ describe("handleDropdownKeydown, when it stands down", () => {
     expect(document.activeElement).toBe(plain);
   });
 
-  // Without arrow-key navigation the ARIA pattern is the right behaviour and Tab
-  // is still there to leave with, so nothing changes for anyone on a keyboard.
   it("leaves the ARIA behaviour alone while navigation is off", () => {
     stop();
     stop = listen(() => false);
@@ -241,8 +218,6 @@ describe("handleDropdownKeydown, when it stands down", () => {
     expect(document.activeElement).toBe(trigger);
   });
 
-  // The player's caption settings use the same wrapper, and in there the arrows
-  // are volume and seek. Claiming one would lose the press twice over.
   it("stands down inside the player", () => {
     const player = document.createElement("div");
     player.setAttribute("data-nav-skip", "");
@@ -282,9 +257,6 @@ describe("handleDropdownKeydown, when it stands down", () => {
     expect(clicks).toEqual([]);
   });
 
-  // A wrapper whose trigger has not rendered yet, or a `customButton` shape
-  // Headless UI never tagged. Guessing at the open state would be worse than
-  // standing down.
   it("stands down with no trigger to read", () => {
     const root = document.createElement("div");
     root.setAttribute("data-nav-dropdown", "");

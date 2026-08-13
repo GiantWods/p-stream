@@ -4,20 +4,8 @@ import { createPortal } from "react-dom";
 import { Icon, Icons } from "@/components/Icon";
 import { useBannerSize } from "@/stores/banner";
 
-/**
- * The floating top-center notices, in one place.
- *
- * Every notice renders into a single host column, so they sit under each other
- * with a real gap instead of each one guessing where the one before it ends.
- * The guessing is what broke: the offsets were absolute and hardcoded per
- * notice, so any change to one overlapped the next, and a dismissed notice left
- * a hole in the middle of the stack.
- */
-
 const HOST_ID = "notice-stack";
 
-// The navbarHeight=80 convention Settings.tsx and HeroPart.tsx use. The host is
-// global, so unlike those it cannot measure a real Navigation instance.
 const NAVBAR_HEIGHT = 80;
 const GAP_BELOW_NAVBAR = 16;
 
@@ -30,8 +18,6 @@ export enum NoticeOrder {
 
 type NoticeAccent = "purple" | "orange" | "indigo";
 
-// Written out per accent rather than composed, so Tailwind's scanner sees every
-// class it has to emit.
 const ACCENTS: Record<
   NoticeAccent,
   { glow: string; badge: string; ping: string; action: string }
@@ -59,12 +45,6 @@ const ACCENTS: Record<
 const ACTION_CLASS =
   "relative flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-bold text-white transition-[background-color,transform] duration-150 ease-spring hover:-translate-y-0.5 active:translate-y-0";
 
-/**
- * Mount once, above the routes. Notices portal into this.
- *
- * z-[600] clears the nav's search row, which paints at z-[500] over the same
- * strip of screen, and stays under every modal's 999+.
- */
 export function NoticeStackHost() {
   const bannerSize = useBannerSize();
   const base = NAVBAR_HEIGHT + GAP_BELOW_NAVBAR;
@@ -80,11 +60,6 @@ export function NoticeStackHost() {
   );
 }
 
-/**
- * Reveal-after-a-delay plus a remembered dismissal, for the notices that are
- * promotions rather than events. `localStorage` can throw outright when storage
- * is blocked, hence the catches.
- */
 export function useDismissibleNotice(storageKey: string, delayMs: number) {
   const [visible, setVisible] = useState(false);
 
@@ -125,10 +100,6 @@ interface NoticeProps {
   onDismiss: () => void;
 }
 
-/**
- * One notice pill. Owns its own enter and exit animation, so a caller only has
- * to decide whether it is mounted at all.
- */
 export function Notice({
   order,
   accent,

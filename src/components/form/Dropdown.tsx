@@ -25,8 +25,6 @@ interface DropdownProps {
 export function Dropdown(props: DropdownProps) {
   const { direction = "down", customButton, customMenu } = props;
 
-  // data-nav-dropdown: arrows travel past this rather than opening it, and close
-  // it rather than leaving it open behind them. See `navigation/dropdown`.
   return (
     <div
       data-nav-dropdown
@@ -53,8 +51,6 @@ export function Dropdown(props: DropdownProps) {
                 </span>
               </Listbox.Button>
             )}
-            {/* Skipped while leaving: the options outlive the close by the
-                transition, and the next arrow press would land back inside. */}
             <div data-nav-skip={open ? undefined : ""}>
               <Transition
                 animation="slide-down"

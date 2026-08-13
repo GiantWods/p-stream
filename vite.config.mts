@@ -187,8 +187,6 @@ export default defineConfig(({ mode }) => {
     },
     css: {
       postcss: {
-        // hoverToFocus runs last on purpose: it needs to see the finished
-        // selectors, including the [dir=…] variants rtl() produces.
         plugins: [tailwind(), rtl(), hoverToFocus()],
       },
     },

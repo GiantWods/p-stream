@@ -64,8 +64,6 @@ describe("layerOf", () => {
     expect(layerOf(el)).toBe(inner);
   });
 
-  // Identity, so nothing has to name a layer: two controls in one bar match and
-  // a card does not match either of them.
   it("separates a bar from the page and joins the bar to itself", () => {
     const bar = chrome(0, 0, WIDTH, 80);
     const a = document.createElement("button");
@@ -94,8 +92,6 @@ describe("safeViewport", () => {
     expect(safeViewport().top).toBe(86);
   });
 
-  // The nav bar spans the full width, so an unqualified "is it near an edge"
-  // test would take the left and the right edge too and leave no viewport.
   it("does not inset sideways for a full-width bar", () => {
     chrome(0, 0, WIDTH, 86);
     const bounds = safeViewport();
@@ -109,8 +105,6 @@ describe("safeViewport", () => {
     expect(safeViewport().bottom).toBe(HEIGHT - 61);
   });
 
-  // There is no scroll position that clears something stranded mid-screen, and
-  // insetting for it would eat the viewport a notice at a time.
   it("insets nothing for an obstruction that reaches no edge", () => {
     chrome(0, 172, WIDTH, 95);
     expect(safeViewport()).toEqual({

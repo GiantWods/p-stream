@@ -6,8 +6,6 @@ import { stepForHold } from "./seekRamp";
 const HOUR = 3600;
 
 describe("stepForHold", () => {
-  // A tap is what the arrow keys have always been in the player. Only the hold
-  // is new, so this is the value that must not have moved.
   it("starts at the 5s the player has always used", () => {
     expect(stepForHold(0, HOUR)).toBe(5);
     expect(stepForHold(400, HOUR)).toBe(5);
@@ -32,15 +30,11 @@ describe("stepForHold", () => {
     }
   });
 
-  // A minute per press through a 90-second trailer would make the bar three
-  // stops wide.
   it("caps the step against the length of the title", () => {
     expect(stepForHold(5000, 90)).toBeCloseTo(4.5);
     expect(stepForHold(0, 40)).toBe(2);
   });
 
-  // Long enough that 5% is more than the top band, so the cap is not the
-  // binding constraint anywhere.
   it("leaves a feature film to the bands", () => {
     expect(stepForHold(5000, 2 * HOUR)).toBe(60);
   });

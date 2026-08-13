@@ -64,12 +64,6 @@ export function GamepadEvents() {
     ],
   );
 
-  // Playback actions only. Navigation ones — the D-pad, confirm, back — never
-  // reach here: the adapter turns those into key presses so that the engine, the
-  // overlays and the player's own keyboard bindings all see them.
-  //
-  // `back` used to be handled here as a bare `history.back()`, which skipped
-  // straight past any popout that was open. It is Escape now.
   useGamepadPlayerActions(handleAction, !widgetMode);
 
   return null;

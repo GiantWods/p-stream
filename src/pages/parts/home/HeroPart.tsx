@@ -34,13 +34,6 @@ function getTimeOfDay(
   return "night";
 }
 
-/**
- * The plain (non-featured) home hero: greeting, search row, genre chips.
- *
- * The featured home page does not use this. Its search row shares the top of
- * the screen with the nav's icon clusters, so the nav renders it directly --
- * see HomeSearchRow and Navigation's centerSlot.
- */
 export function HeroPart({
   setIsSticky,
   searchParams,
@@ -102,10 +95,6 @@ export function HeroPart({
                 onFixedToggle={stickStateChanged}
                 scrollElement="window"
               >
-                {/* Marked only while pinned: react-sticky-el goes
-                    `position: fixed`, and from there the row owns a band of the
-                    viewport the same way the nav bar does. Unpinned it is
-                    ordinary page content and must not read as chrome. */}
                 <div data-nav-obstruct={showBg ? "" : undefined}>
                   <HomeSearchRow
                     searchParams={searchParams}

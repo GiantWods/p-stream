@@ -79,8 +79,6 @@ beforeEach(() => {
     s.progress.buffered = 200;
     s.progress.draggingTime = 0;
     s.interface.isSeeking = false;
-    // The two the store reaches through to. `setSeeking` is what tells a real
-    // display to hold the frame while a scrub is in progress.
     s.display = { setTime, setSeeking: vi.fn() } as any;
     s.meta = null;
   });
@@ -121,8 +119,6 @@ describe("the seek bar, while the engine is off", () => {
     usePreferencesStore.setState({ spatialNavigation: "off" });
   });
 
-  // The player's own ←/→ are still a locked 5s seek for these users, and a bar
-  // that took focus would be a second thing listening for the same key.
   it("is not focusable and not a candidate", () => {
     mount();
 
@@ -150,9 +146,6 @@ describe("the seek bar, with the engine on", () => {
     expect(bar()!.getAttribute("aria-valuetext")).toBe("01:40");
   });
 
-  // The point of the split: while the bar is scrubbing, the video is not being
-  // asked to seek. One `setTime` per autorepeat tick is a request storm through
-  // hls.js, and on a TV it stalls the stream outright.
   it("scrubs a preview without seeking the video", () => {
     mount();
 
@@ -175,9 +168,6 @@ describe("the seek bar, with the engine on", () => {
     expect(isSeeking()).toBe(false);
   });
 
-  // Two taps are twice as far as one. `setTime` is answered by the media element
-  // on its own schedule, so the store still reports the old position when the
-  // second press arrives — reading it there would land both taps in one place.
   it("counts a second tap from where the first one landed", () => {
     mount();
     press(bar()!, "ArrowRight");
@@ -190,8 +180,6 @@ describe("the seek bar, with the engine on", () => {
     expect(setTime).toHaveBeenLastCalledWith(TIME + 10);
   });
 
-  // But not forever: a mouse drag or a skip button moves the video without this
-  // knowing, and a stale target would then fight it.
   it("trusts the store again once the seek has had time to land", () => {
     mount();
     press(bar()!, "ArrowRight");
@@ -221,8 +209,6 @@ describe("the seek bar, with the engine on", () => {
     expect(setTime).toHaveBeenLastCalledWith(0);
   });
 
-  // Each tick starts from where the last one left off, and the step grows with
-  // how long the key has been down rather than with how many ticks have arrived.
   it("accelerates while the key is held", () => {
     mount();
 
@@ -251,8 +237,6 @@ describe("the seek bar, with the engine on", () => {
     expect(draggingTime()).toBe(TIME + 5 + 60 - 5);
   });
 
-  // Sideways belongs to the bar; up and down are the way off it. Without this
-  // there is no key left that leaves, and a remote is stuck on the seek bar.
   it("leaves ↑ and ↓ to the engine", () => {
     mount();
 
@@ -261,8 +245,6 @@ describe("the seek bar, with the engine on", () => {
     expect(isSeeking()).toBe(false);
   });
 
-  // Nothing to seek through, so the press is better spent on getting off a
-  // control that cannot be used.
   it("gives the arrows back when the duration is unknown", () => {
     usePlayerStore.setState((s) => {
       s.progress.duration = 0;

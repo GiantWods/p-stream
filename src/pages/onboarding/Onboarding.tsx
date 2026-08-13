@@ -184,8 +184,6 @@ export function OnboardingPage() {
         </Paragraph>
 
         {/* Desktop Cards */}
-        {/* data-nav-first, so a first-run remote starts on the recommended
-            option rather than on the "more info" link above it. */}
         <div
           data-nav-row
           data-nav-first

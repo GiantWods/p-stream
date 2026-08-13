@@ -74,9 +74,6 @@ export function Footer() {
           </h3>
           <p className="mt-3">{t("footer.legal.disclaimerText")}</p>
         </div>
-        {/* Keeps left/right among the links, and gives left off the leftmost one
-            somewhere to go: nothing sits beside the footer, so it was a dead key
-            until the row let it fall through to document order. */}
         <div data-nav-row className="flex flex-wrap gap-[0.5rem] -ml-3">
           {conf().GITHUB_LINK && (
             <FooterLink icon={Icons.GITHUB} href={conf().GITHUB_LINK}>

@@ -22,12 +22,6 @@ function place(el: HTMLElement, x: number, y: number, w: number, h: number) {
   return el;
 }
 
-/**
- * A scroll container jsdom will agree is scrollable. jsdom reports 0 for every
- * layout-derived property, so `scrollWidth`/`clientWidth` have to be defined
- * outright, and the overflow has to be a real inline style for
- * `getComputedStyle` to see it.
- */
 function scroller(
   axis: "x" | "y",
   x: number,
@@ -73,15 +67,11 @@ describe("scrollDelta", () => {
     expect(scrollDelta(450, 500, 0, 500, MARGIN)).toBe(24);
   });
 
-  // The margin is why a focused item is never flush against the edge of its
-  // scroller, which otherwise reads as "this is the last one" when it is not.
   it("counts an item touching the edge as needing a scroll", () => {
     expect(scrollDelta(0, 50, 0, 500, MARGIN)).toBe(-24);
     expect(scrollDelta(0, 50, 0, 500, 0)).toBe(0);
   });
 
-  // Chasing both edges of something that cannot fit would scroll one way on
-  // this keypress and back on the next.
   it("aligns the leading edge of something too big to fit", () => {
     expect(scrollDelta(-100, 900, 0, 500, MARGIN)).toBe(-124);
   });
@@ -99,12 +89,7 @@ describe("scrollDelta", () => {
     expect(scrollDelta(30, 80, 0, 500, MARGIN, 200)).toBe(0);
   });
 
-  // The band exists to show what is coming next. Enforcing it on something that
-  // does not fit inside it would push the element itself off the far edge, which
-  // is the opposite of the point.
   it("drops the band for an element too big to fit inside it", () => {
-    // 400 tall in 500 of bounds: the 200px band cannot be honoured, so this is
-    // the plain 24px answer.
     expect(scrollDelta(150, 550, 0, 500, MARGIN, 200)).toBe(74);
   });
 });
@@ -136,8 +121,6 @@ describe("scrollIntoViewport", () => {
     expect(window.scrollBy).not.toHaveBeenCalled();
   });
 
-  // The whole reason this exists instead of `scrollIntoView`: an ancestor with
-  // nothing to hide must not move just because a descendant did.
   it("skips ancestors that are not scrollers", () => {
     const plain = place(document.createElement("div"), 0, 0, 1000, 800);
     const carousel = scroller("x", 0, 200, 1000, 300, 4000);
@@ -166,8 +149,6 @@ describe("scrollIntoViewport", () => {
     );
   });
 
-  // The reported bug: 24px from the top of a page whose nav bar owns the first
-  // 86px of it is 62px underneath the nav bar.
   it("stops short of the chrome instead of parking focus beneath it", () => {
     const bar = document.createElement("div");
     bar.setAttribute("data-nav-obstruct", "");
@@ -207,8 +188,6 @@ describe("scrollIntoViewport", () => {
     );
   });
 
-  // Lookahead on the axis you are not travelling along would move the page
-  // sideways for a vertical keypress.
   it("keeps the orthogonal axis on the minimum", () => {
     const item = place(document.createElement("button"), 900, 700, 200, 100);
     document.body.append(item);

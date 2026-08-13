@@ -154,9 +154,6 @@ describe("useGamepadNavigation", () => {
     expect(frames).toEqual([]);
   });
 
-  // The preference lives on a settings screen that, on a console browser, cannot
-  // be reached until the D-pad moves focus — so gating only on it means the one
-  // input that cannot get to the switch is the one that needs it thrown.
   it("starts polling as soon as a controller announces itself", () => {
     usePreferencesStore.setState({ enableGamepadControls: false });
     focusTarget();
@@ -184,8 +181,6 @@ describe("useGamepadNavigation", () => {
     watch.stop();
   });
 
-  // `gamepadconnected` fires once per session, so a controller picked back up
-  // after some mouse use would otherwise navigate with no focus ring at all.
   it("declares the input key-like, so focus rings come back", () => {
     focusTarget();
     mount(<Adapter />);
@@ -213,8 +208,6 @@ describe("useGamepadNavigation", () => {
     watch.stop();
   });
 
-  // B6's widget mode: the arrows belong to the control bar for as long as it
-  // lasts, and the same button has to change meaning with them.
   it("gives the D-pad back to navigation in widget mode", () => {
     focusTarget();
     mount(
@@ -238,8 +231,6 @@ describe("useGamepadNavigation", () => {
     watch.stop();
   });
 
-  // Back used to be a bare `history.back()` from inside the player, which skipped
-  // straight past any popout that happened to be open.
   it("sends back through Escape even while the player owns the pad", () => {
     focusTarget();
     mount(

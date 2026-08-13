@@ -203,10 +203,6 @@ function App() {
       <DetailsModal id="discover-details" />
       <DetailsModal id="player-details" />
       {/* DebugFab: dev-only floating panel (cookie/ratings/local-data resets) */}
-      {/* A landmark around the router outlet and nothing else, so navigation
-          can resolve a route entry point without ever picking a control that
-          belongs to one of the modals above. `contents` keeps it out of the
-          layout: the pages stay direct flex children of Layout. */}
       <main className="contents">
         {!showDowntime && (
           <Routes>

@@ -21,8 +21,6 @@ const RECT = {
 } as DOMRect;
 
 beforeEach(() => {
-  // jsdom lays nothing out, and the entry-point resolver drops zero-size
-  // elements as invisible.
   vi.spyOn(Element.prototype, "getBoundingClientRect").mockReturnValue(RECT);
   vi.spyOn(Element.prototype, "getClientRects").mockReturnValue([
     RECT,
@@ -105,9 +103,6 @@ describe("dispatchGamepadAction", () => {
     watch.stop();
   });
 
-  // Focus nowhere means no origin, so a move is not a move. The first press of a
-  // session is always in that state, because the event that turns the engine on
-  // is the same button press.
   it("spends a press with focus nowhere on landing somewhere", () => {
     const el = button("a");
     const watch = seen("ArrowDown");
@@ -131,9 +126,6 @@ describe("dispatchGamepadAction", () => {
     watch.stop();
   });
 
-  // B is a Back button, not the Escape key: it dismisses what is open and then
-  // leaves the page. `key` is what every dismiss handler in the app listens for,
-  // and the code is what earns the route change on top of it.
   it("sends Back as a real back button rather than a bare Escape", () => {
     button("a");
     const watch = seen("Escape");
@@ -147,9 +139,6 @@ describe("dispatchGamepadAction", () => {
   });
 
   describe("confirm", () => {
-    // A synthesized event has `isTrusted: false`, so the browser runs no default
-    // action — without this the A button would do nothing on every button and
-    // link in the app.
     it("clicks a natively activatable target itself", () => {
       const el = button("a");
       const clicks = vi.fn();
@@ -161,9 +150,6 @@ describe("dispatchGamepadAction", () => {
       expect(clicks).toHaveBeenCalledTimes(1);
     });
 
-    // A9's activation handles this group and announces itself by preventing
-    // default. Clicking on top of it fires the action twice, which is the exact
-    // failure A9 measured on the navbar dropdown.
     it("leaves a hand-rolled control to its own handler", () => {
       const el = document.createElement("div");
       el.tabIndex = 0;

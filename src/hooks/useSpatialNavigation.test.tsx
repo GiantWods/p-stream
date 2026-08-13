@@ -50,12 +50,6 @@ function mount() {
   });
 }
 
-/**
- * Lets one animation frame pass. Route entry and focus recovery both defer by
- * a frame on purpose — the first so a freshly rendered route has something to
- * enter, the second so "focus went to `<body>`" can be told apart from "focus
- * is on its way somewhere else".
- */
 async function nextFrame() {
   await act(async () => {
     await new Promise((resolve) => {
@@ -64,15 +58,6 @@ async function nextFrame() {
   });
 }
 
-/**
- * Waits out the route entry point's retry window.
- *
- * It re-attempts every frame for `ENTRY_DEADLINE_MS` after a route arrives, and
- * while it is still running it puts focus back on the page by itself. That is
- * indistinguishable from recovery working — measured: the recovery tests below
- * passed with the recovery code disabled — so anything about a *later* focus
- * loss has to start after this window has closed.
- */
 async function pastRouteEntry() {
   await act(async () => {
     await new Promise((resolve) => {
@@ -130,8 +115,6 @@ afterEach(() => {
 });
 
 describe("useSpatialNavigation", () => {
-  // The default, and the only state the existing website is ever in. Arrow
-  // keys have to keep scrolling the page exactly as they do today.
   it("does nothing at all with the preference off", () => {
     mount();
 
@@ -141,8 +124,6 @@ describe("useSpatialNavigation", () => {
     expect(event.defaultPrevented).toBe(false);
   });
 
-  // "Off" means the listener is absent, not present and returning early --
-  // so shipping this dormant is indistinguishable from not shipping it.
   it("attaches no listeners at all while dormant", () => {
     const onWindow = vi.spyOn(window, "addEventListener");
     const onDocument = vi.spyOn(document, "addEventListener");
@@ -157,8 +138,6 @@ describe("useSpatialNavigation", () => {
         ["keydown", "focusout", "focusin"].includes(type as string),
       ),
     ).toEqual([]);
-    // Recovery watches the DOM for the focused element being removed, which is
-    // the one part of this that costs something on every mutation in the app.
     expect(observe).not.toHaveBeenCalled();
   });
 
@@ -184,8 +163,6 @@ describe("useSpatialNavigation", () => {
     expect(document.activeElement).toBe(second);
   });
 
-  // A television has no pointer and no Tab key, so the settings screen holding
-  // the preference cannot be reached without this already being on.
   it("overrides the preference on a TV", () => {
     vi.spyOn(navigator, "userAgent", "get").mockReturnValue(
       "Mozilla/5.0 (SMART-TV; LINUX; Tizen 6.0) AppleWebKit/537.36 76.0.3809.146/6.0 TV Safari/537.36",
@@ -197,8 +174,6 @@ describe("useSpatialNavigation", () => {
     expect(document.activeElement).toBe(second);
   });
 
-  // `navigator.getGamepads()` reports nothing until a button is pressed, so
-  // the connect event is the only usable signal.
   it("turns on when a gamepad arrives mid-session", () => {
     mount();
     expect(pressArrowRight().defaultPrevented).toBe(false);
@@ -259,8 +234,6 @@ describe("back, wired up", () => {
   }
 
   beforeEach(() => {
-    // Somewhere to go back *to*. On index 0 the answer is always "do nothing",
-    // which would make every assertion below pass for the wrong reason.
     window.history.pushState({ idx: 1 }, "");
   });
 
@@ -274,8 +247,6 @@ describe("back, wired up", () => {
     expect(back).toHaveBeenCalledTimes(1);
   });
 
-  // Escape dismisses; it does not navigate. Wired the other way, Escape on a page
-  // reached from a movie reopened the movie.
   it("does not go back on the Escape key", () => {
     const back = watchBack();
     usePreferencesStore.setState({ spatialNavigation: "on" });
@@ -295,10 +266,6 @@ describe("back, wired up", () => {
     expect(back).not.toHaveBeenCalled();
   });
 
-  // The case the capture-phase snapshot exists for. `useGlobalKeyboardEvents`
-  // is registered first, so it has already emptied the modal stack by the time
-  // anything here runs in the bubble phase — asking "is a modal open?" then
-  // answers no, and the user loses a route every time they dismiss a dialog.
   it("defers to the modal handler, even though it has already run", () => {
     const back = watchBack();
     usePreferencesStore.setState({ spatialNavigation: "on" });
@@ -372,11 +339,6 @@ describe("route entry and focus recovery, wired up", () => {
     expect(document.activeElement).toBe(second);
   });
 
-  // The reported bug, and the reason a second signal exists. Chrome fires no
-  // focus event when the focused element is simply removed — the settings save
-  // bar closing under its own Save button — so a handler waiting for one waits
-  // forever and the user has to Tab back into the page. Suppressing focusout is
-  // how that browser behaviour is reproduced here; jsdom does fire it.
   it("recovers focus when the element vanishes with no focusout", async () => {
     usePreferencesStore.setState({ spatialNavigation: "on" });
     mount();

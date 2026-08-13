@@ -7,11 +7,6 @@ export function SidebarSection(props: {
   children: React.ReactNode;
   className?: string;
 }) {
-  // No confinement: up/down already walks the list and right into the content
-  // pane is exactly where right should go. What geometry gets wrong is coming
-  // back -- the sidebar is sticky, so left from anywhere in a long settings
-  // page lands on whichever link happens to share that y. Memory returns the
-  // user to the section they left from.
   return (
     <section data-nav-remember className={props.className ?? ""}>
       <p className="text-sm font-bold uppercase text-settings-sidebar-type-secondary mb-2">

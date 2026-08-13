@@ -9,8 +9,6 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// This decides whether the probe chunk gets fetched at all, so a regression
-// here means shipping a debug overlay to everyone.
 describe("isNavDebugEnabled", () => {
   it("is off by default", () => {
     expect(isNavDebugEnabled()).toBe(false);

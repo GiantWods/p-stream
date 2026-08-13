@@ -1,17 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-/**
- * Whether the user has reached for a controller this session.
- *
- * `gamepadconnected` is the only reliable signal: `navigator.getGamepads()`
- * reports nothing until a button is actually pressed, so the initial read is
- * empty even with a pad plugged in. Which also means the event does mean "the
- * user reached for it", not merely "one is attached".
- *
- * One-way, deliberately. A controller put down for a minute is still the thing
- * the user is holding, and the alternative — some timeout that decides they have
- * stopped — takes the D-pad away mid-session.
- */
 export function useGamepadSeen(): boolean {
   const [seen, setSeen] = useState(false);
 
@@ -102,18 +90,6 @@ interface GamepadCallbacks {
   enabled: boolean;
 }
 
-/**
- * The mapping the polling loop should be using right now.
- *
- * Two tables, because the player wants its D-pad on volume and seek while
- * everywhere else wants it moving focus. `saved` is the remap from preferences,
- * which `GamepadControlsModal` writes in full — every button, not just the
- * changed ones — so a plain spread over the player table would drag the general
- * D-pad defaults in with it and undo the whole point. Only entries that differ
- * from the general default are treated as something the user actually asked for,
- * and those do carry into the player: a button deliberately assigned to
- * `confirm` should mean confirm wherever the user is.
- */
 export function resolveGamepadMapping(
   saved: Record<string, string>,
   transport: boolean,
@@ -136,10 +112,6 @@ export function resolveGamepadMapping(
 }
 
 export function useGamepadPolling({ onAction, enabled }: GamepadCallbacks) {
-  // Keyed by gamepad index, because a second controller sharing one map
-  // corrupts the first's edge detection — pad B releasing a button it never
-  // pressed records a falling edge for pad A, and the next real press on pad A
-  // reads as "already down" and fires nothing.
   const prevButtonStates = useRef<Record<number, Record<number, boolean>>>({});
   const animFrameRef = useRef<number | null>(null);
   const onActionRef = useRef(onAction);
@@ -216,8 +188,6 @@ export function useGamepadPolling({ onAction, enabled }: GamepadCallbacks) {
         }
       }
 
-      // A pad unplugged mid-press would otherwise leave that button recorded as
-      // down, and whatever reconnects into its slot loses its first press.
       for (const seen of Object.keys(prevButtonStates.current)) {
         if (!live[Number(seen)]) delete prevButtonStates.current[Number(seen)];
       }

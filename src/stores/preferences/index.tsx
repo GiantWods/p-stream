@@ -10,15 +10,6 @@ import {
 export type PreferredMinimumResolution = "none" | "720" | "1080" | "4k";
 export type VolumeBoostApplyMode = "current" | "title";
 
-/**
- * Whether the arrow keys move focus instead of scrolling the page.
- *
- * Off by default, and deliberately not inferred from anything the user did.
- * Arrow-key scrolling is native browser behaviour that everyone on the website
- * has today, so only an explicit choice takes it away. TVs and gamepads
- * override this without reading it, because on those there is nothing to opt
- * in *with* — no pointer, no Tab, no way to reach a settings screen.
- */
 export type SpatialNavigationPreference = "on" | "off";
 
 export interface PreferencesStore {

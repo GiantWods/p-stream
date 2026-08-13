@@ -11,19 +11,7 @@ import { useSearchQuery } from "@/hooks/useSearchQuery";
 
 export interface HomeSearchRowProps {
   searchParams: ReturnType<typeof useSearchQuery>;
-  /**
-   * True when this is the featured home page's row, which lives inside the nav
-   * bar rather than in the page below it. Drives the translucent-over-artwork
-   * styling, and hides the Discover pill -- the featured page has its own
-   * entry points into Discover.
-   */
   isInFeatured?: boolean;
-  /**
-   * Only meaningful when not in the nav. The plain hero's row is pinned by
-   * react-sticky-el as the page scrolls, and this is that component telling us
-   * it has gone fixed. In the nav there is nothing to pin, so the equivalent
-   * signal is read straight off the scroll position instead.
-   */
   isSticky?: boolean;
 }
 
@@ -39,10 +27,6 @@ export function HomeSearchRow({
   const inputRef = useRef<HTMLInputElement>(null);
   useSlashFocus(inputRef);
 
-  // Stands in for the sticky signal when this row is in the nav. Sticky used a
-  // -14px top offset, so it flipped a little after the scroll actually
-  // started; this flips on the first pixel. The only thing downstream of it is
-  // whether the search bar's background is solid or half transparent.
   const [scrolled, setScrolled] = useState(() => window.scrollY > 0);
   useEffect(() => {
     if (!isInFeatured) return undefined;

@@ -16,11 +16,6 @@ export function useShouldShowControls() {
   const isUsingTouch = lastHoveringState === PlayerHoverState.MOBILE_TAPPED;
   const isHovering = hovering !== PlayerHoverState.NOT_HOVERING;
 
-  // Widget mode holds the controls open for as long as it lasts. They are
-  // unmounted while hidden, not just faded, so without this there would be
-  // nothing in the DOM for the arrows to move between.
-  //
-  // when using touch, pause screens can be dismissed by tapping
   const showTargetsWithoutPause =
     isHovering ||
     (isHoveringControls && !isUsingTouch) ||

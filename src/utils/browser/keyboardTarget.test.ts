@@ -66,9 +66,6 @@ describe("isEditableTarget", () => {
 });
 
 describe("ownsKeyboardInput", () => {
-  // The two call sites this replaced tested `nodeName === "INPUT"`, so every
-  // input must keep returning true regardless of type — otherwise a shortcut
-  // that is suppressed today would start firing.
   it("covers every input type, not just text ones", () => {
     expect(ownsKeyboardInput(mount('<input type="range" />'))).toBe(true);
     expect(ownsKeyboardInput(mount('<input type="checkbox" />'))).toBe(true);
@@ -94,10 +91,6 @@ describe("ownsKeyboardInput", () => {
   });
 });
 
-// The predicate directional navigation gates on. It has to sit between the
-// other two: `isEditableTarget` would let the engine move focus off a slider
-// while the slider also changed value, and `ownsKeyboardInput` would leave a
-// D-pad user permanently parked on a checkbox.
 describe("ownsArrowKeys", () => {
   it("covers controls the arrows drive the value of", () => {
     expect(ownsArrowKeys(mount("<select></select>"))).toBe(true);
@@ -117,8 +110,6 @@ describe("ownsArrowKeys", () => {
     expect(ownsArrowKeys(mount('<div role="textbox"></div>'))).toBe(true);
   });
 
-  // Being unable to arrow off a control is worse than any shortcut conflict:
-  // on a remote there is no pointer to escape with.
   it("leaves controls that mean nothing by an arrow navigable", () => {
     expect(ownsArrowKeys(mount('<input type="checkbox" />'))).toBe(false);
     expect(ownsArrowKeys(mount('<input type="radio" />'))).toBe(false);
@@ -131,8 +122,6 @@ describe("ownsArrowKeys", () => {
     expect(ownsArrowKeys(null)).toBe(false);
   });
 
-  // ↑ and ↓ have nothing to move the caret to. Keeping all four is what strands
-  // a remote in the search bar.
   it("gives up and down back from a single-line field", () => {
     const input = mount(
       '<input type="search" value="abc" />',
@@ -144,9 +133,6 @@ describe("ownsArrowKeys", () => {
     expect(ownsArrowKeys(input, "down")).toBe(false);
   });
 
-  // The other half of the same argument: an arrow the caret cannot answer is an
-  // arrow the field has no business keeping. An empty search box owns neither of
-  // them, which is the state a user arrives at it in.
   it("gives left and right back at the ends of the value", () => {
     const empty = mount('<input type="search" />');
     expect(ownsArrowKeys(empty, "left")).toBe(false);

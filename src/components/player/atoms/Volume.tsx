@@ -39,10 +39,6 @@ export function Volume(props: Props) {
     toggleMute();
   }, [toggleMute]);
 
-  // Enter only, deliberately. Space is play/pause for the whole player and
-  // KeyboardEvents preventDefaults it, which is why the real <button> controls
-  // beside this one don't activate on Space either. Handling it here would
-  // mute *and* pause on one press.
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       if (event.key !== "Enter") return;

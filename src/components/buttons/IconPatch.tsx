@@ -26,9 +26,6 @@ export function IconPatch(props: IconPatchProps) {
     : "";
   const sizeClasses = props.downsized ? "h-10 w-10" : "h-12 w-12";
 
-  // Only a control when it carries its own handler. Most call sites wrap it in
-  // a <button> or an <a> and pass none — those must not gain a second tab stop
-  // sitting inside the first.
   const onClick = props.onClick;
   const interactive = !!onClick;
 

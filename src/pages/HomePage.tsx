@@ -166,9 +166,6 @@ export function HomePage() {
   return (
     <HomeLayout
       showBg={showBg}
-      // The featured hero draws its search row across the top of the screen,
-      // level with the nav's icons, so the nav renders it -- see HeroPart's
-      // header for why it cannot stay in the page below.
       navCenter={
         enableFeatured ? (
           <HomeSearchRow searchParams={searchParams} isInFeatured />

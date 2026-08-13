@@ -7,10 +7,6 @@ import {
   isFocusableVisible,
 } from "./focusables";
 
-// jsdom has no layout: `getClientRects()` is always empty and
-// `getBoundingClientRect()` is always zeros, so every element would read as
-// invisible. These helpers hand each element a box, which is the only part of
-// the real browser this module needs.
 function box(el: HTMLElement, width = 100, height = 40) {
   const rect = {
     x: 0,
@@ -83,10 +79,6 @@ describe("FOCUSABLE_SELECTOR", () => {
     expect(ids(collectFocusables())).toEqual(["b"]);
   });
 
-  // MediaCard puts tabIndex={0} on an inner element and tabIndex={-1} on the
-  // <Link> wrapping it, with Enter forwarded to the link's click. Both are
-  // focusable; only the inner one does anything. Excluding -1 is what keeps
-  // that from becoming two stacked candidates per card.
   it("yields one candidate for a card, not the wrapper and the inner", () => {
     render(`
       <a id="card-link" href="/media/1" tabindex="-1">
@@ -97,8 +89,6 @@ describe("FOCUSABLE_SELECTOR", () => {
   });
 
   it("parses in this browser", () => {
-    // Guards against a selector that old Chromium would reject outright: one
-    // bad clause throws and takes the whole query with it.
     expect(() => document.querySelectorAll(FOCUSABLE_SELECTOR)).not.toThrow();
   });
 });
@@ -110,9 +100,6 @@ describe("isFocusableVisible", () => {
     expect(isFocusableVisible(el as HTMLElement)).toBe(false);
   });
 
-  // OverlayPortal renders an empty tabIndex={0} spacer so focus-trap has
-  // something to hold while a modal is still empty. Landing on it would read
-  // as focus disappearing.
   it("rejects a zero-size element", () => {
     const el = render(`<div id="spacer" tabindex="0"></div>`)
       .children[0] as HTMLElement;

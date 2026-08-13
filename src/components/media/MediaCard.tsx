@@ -168,21 +168,6 @@ function MediaCardContent({
   // Show skeleton if forced or if media hasn't loaded yet (empty title/poster)
   const shouldShowSkeleton = forceSkeleton || (!media.title && !media.poster);
 
-  // The skeleton is deliberately not focusable, and deliberately does not try
-  // to share a focusable host with the loaded card below.
-  //
-  // The obvious worry is that focus sits on a card which then reverts to a
-  // skeleton, dropping focus to <body>. That cannot happen here: every caller
-  // renders skeletons and real cards as two different arrays with disjoint
-  // keys (`skeleton-${i}` vs the TMDB id), so React destroys the skeleton
-  // subtree wholesale rather than mutating a card in place — measured on Home,
-  // where 40 skeletons are replaced by 80 cards. A `tabIndex` here would
-  // therefore not preserve anything; it would add 40 focus candidates that are
-  // then destroyed, which is the failure it was meant to avoid.
-  //
-  // If a caller ever does keep a card's key stable across the transition, the
-  // focusable host has to become stable too — but the fix belongs at that
-  // caller's keying, not here.
   if (shouldShowSkeleton) {
     return (
       <div ref={targetRef as React.RefObject<HTMLDivElement>}>
@@ -201,33 +186,6 @@ function MediaCardContent({
 
   return (
     <div ref={targetRef as React.RefObject<HTMLDivElement>}>
-      {/* A card's focus target and its click target are two different
-          elements, on purpose:
-
-          - Focus lands here, on the `.group` element, because that is what the
-            hover styling is written against — `hover:bg-mediaCard-hoverBackground`
-            here and `group-hover:` on the children. The focus ring and the
-            hover-mirrored styling only line up with the card if focus is on
-            this exact node.
-          - Clicking and navigating are the wrapping <Link>'s job (see the end
-            of this file), which carries `tabIndex={-1}` so the card is one tab
-            stop rather than two nested ones.
-
-          Enter bridges the two by clicking this element, letting the event
-          bubble to the Link's onClick. Anything that moves the tabIndex, drops
-          the -1 from the Link, or reparents this element out of the Link
-          breaks keyboard activation without breaking mouse activation, so it
-          will look fine until someone tries the keyboard.
-
-          `!e.repeat` keeps a held Enter to a single activation, which is what
-          the previous onKeyUp handler gave for free. Without it, holding Enter
-          on a card would stack a details modal per repeat.
-
-          `preventDefault` marks the event handled. It suppresses nothing
-          native — a div has no Enter behaviour to suppress — but directional
-          navigation activates a focused [tabindex] element by synthesizing a
-          click on it, and this is how it can tell the element got there
-          first. */}
       <Flare.Base
         className={`group -m-[0.705em] rounded-xl bg-background-main transition-colors duration-300 focus:relative focus:z-10 ${
           canLink ? "hover:bg-mediaCard-hoverBackground tabbable" : ""
@@ -335,11 +293,6 @@ function MediaCardContent({
                 closable ? "opacity-100" : "pointer-events-none opacity-0"
               }`}
             >
-              {/* Handler is dropped entirely when not closable, not just
-                  no-opped. The wrapper above is only faded out and
-                  pointer-events-none — it stays in the DOM — so an IconPatch
-                  with an onClick would put an invisible tab stop on every
-                  single card. */}
               <IconPatch
                 clickable
                 className="text-2xl text-mediaCard-badgeText transition-transform hover:scale-110 duration-500"
@@ -657,16 +610,6 @@ export function MediaCard(props: MediaCardProps) {
   }
 
   return (
-    // The click half of the contract described above `Flare.Base` in
-    // MediaCardContent: this navigates, but is kept out of the tab order so
-    // that focus lands on the styled element inside instead.
-    //
-    // A card is two candidates, not one: the ellipsis button is pinned inside
-    // the card's own rect, so it wins the first → and the first ↓ from every
-    // card in every grid and carousel, and → off it lands a row up because the
-    // nearest thing right of a 35px button is a card above. Declaring the cell a
-    // single column makes sideways skip it entirely and vertical reach it in
-    // document order, which is where it looks like it is.
     <Link
       to={link}
       data-nav-grid="1"

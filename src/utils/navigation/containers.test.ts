@@ -59,9 +59,6 @@ describe("readContainer", () => {
     ).toBe(6);
   });
 
-  // A grid that cannot say how wide it is still confines both axes; it just
-  // falls back to geometry inside. Treating the typo as "not a container"
-  // would silently change navigation somewhere else on the page instead.
   it("stays a grid with an unusable column count", () => {
     for (const value of ["auto", "0", "-2", ""]) {
       const container = readContainer(
@@ -182,9 +179,6 @@ describe("resolveSearchRoot", () => {
     expect(resolveSearchRoot(el("#btn"))).toBe(el("#panel"));
   });
 
-  // The page behind an open modal is still marked up. Honouring its scope here
-  // would widen the search out of the modal, which is the one thing the overlay
-  // contract exists to prevent.
   it("takes the overlay when the marked scope is behind it", () => {
     markup(`
       <div>
@@ -199,12 +193,6 @@ describe("resolveSearchRoot", () => {
 });
 
 describe("stepInGrid", () => {
-  // 3 columns, 8 items — a ragged last row, which is the case that strands
-  // focus if the arithmetic is written for a full rectangle.
-  //
-  //   0 1 2
-  //   3 4 5
-  //   6 7
   const step = (index: number, direction: Direction) =>
     stepInGrid(index, 8, 3, direction);
 
@@ -218,8 +206,6 @@ describe("stepInGrid", () => {
     expect(step(4, "up")).toBe(1);
   });
 
-  // Wrapping is worse than stopping: focus appears to jump left and down at
-  // once, and there is no key that undoes it.
   it("stops at a row's edges rather than wrapping", () => {
     expect(step(2, "right")).toBeNull();
     expect(step(3, "left")).toBeNull();
@@ -276,9 +262,6 @@ describe("focus memory", () => {
     expect(recallDescendant(el("#outer"))).toBeNull();
   });
 
-  // The case this must not get wrong. A carousel that swaps pages leaves a
-  // remembered element that is no longer in the document, and handing focus to
-  // a detached node silently drops it on `<body>`.
   it("forgets an element that has left the document", () => {
     carousel();
     const b = el("#b");
@@ -342,9 +325,6 @@ describe("resolveContainerEntry", () => {
     expect(resolveContainerEntry(container, [el("#a")])).toBeNull();
   });
 
-  // Where someone actually was beats where a developer guessed they would
-  // start. Overriding a real position on every re-entry is the annoying half
-  // of "restores the last-focused descendant".
   it("prefers memory over data-nav-first", () => {
     const { container, inside } = entry(`
       <div data-nav-row data-nav-remember id="c">
