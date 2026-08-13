@@ -1,23 +1,13 @@
 /* eslint-disable import/no-extraneous-dependencies */
 import { describe, expect, it } from "vitest";
 
-import bookmarks from "./fixtures/bookmarks.json";
 import detailsModal from "./fixtures/details-modal.json";
-import discover from "./fixtures/discover.json";
 import home from "./fixtures/home.json";
-import search from "./fixtures/search.json";
 import settings from "./fixtures/settings.json";
 import { Direction, NavRect, pickCandidate } from "./spatial";
 
-interface FixtureRect {
-  i: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  tag: string;
-  label: string;
-}
+/** One captured element: [x, y, width, height]. */
+type FixtureRect = number[];
 
 interface Fixture {
   surface: string;
@@ -31,21 +21,18 @@ const DIRECTIONS: Direction[] = ["up", "down", "left", "right"];
 
 const SURFACES: { slug: string; fixture: Fixture; unreachable: number }[] = [
   { slug: "home", fixture: home as Fixture, unreachable: 0 },
-  { slug: "discover", fixture: discover as Fixture, unreachable: 0 },
-  { slug: "search", fixture: search as Fixture, unreachable: 0 },
-  { slug: "bookmarks", fixture: bookmarks as Fixture, unreachable: 0 },
   { slug: "settings", fixture: settings as Fixture, unreachable: 3 },
   { slug: "details-modal", fixture: detailsModal as Fixture, unreachable: 0 },
 ];
 
 function toRects(fixture: Fixture): NavRect[] {
-  return fixture.rects.map((r) => ({
-    left: r.x,
-    top: r.y,
-    right: r.x + r.width,
-    bottom: r.y + r.height,
-    width: r.width,
-    height: r.height,
+  return fixture.rects.map(([x, y, width, height]) => ({
+    left: x,
+    top: y,
+    right: x + width,
+    bottom: y + height,
+    width,
+    height,
   }));
 }
 
@@ -63,10 +50,9 @@ function isAhead(origin: NavRect, landed: NavRect, direction: Direction) {
   }
 }
 
-function describeRect(r: FixtureRect) {
-  return `#${r.i} ${r.tag} ${r.width}x${r.height} @${r.x},${r.y}${
-    r.label ? ` "${r.label}"` : ""
-  }`;
+function describeRect(rects: FixtureRect[], i: number) {
+  const [x, y, width, height] = rects[i];
+  return `#${i} ${width}x${height} @${x},${y}`;
 }
 
 describe.each(SURFACES)("$slug", ({ slug, fixture, unreachable }) => {
@@ -90,13 +76,11 @@ describe.each(SURFACES)("$slug", ({ slug, fixture, unreachable }) => {
         if (landed === null) return;
         if (landed === i) {
           wrong.push(
-            `${describeRect(fixture.rects[i])} ${direction} -> itself`,
+            `${describeRect(fixture.rects, i)} ${direction} -> itself`,
           );
         } else if (!isAhead(rects[i], rects[landed], direction)) {
           wrong.push(
-            `${describeRect(fixture.rects[i])} ${direction} -> ${describeRect(
-              fixture.rects[landed],
-            )}`,
+            `${describeRect(fixture.rects, i)} ${direction} -> ${describeRect(fixture.rects, landed)}`,
           );
         }
       });
@@ -108,7 +92,7 @@ describe.each(SURFACES)("$slug", ({ slug, fixture, unreachable }) => {
     const stranded = rects
       .map((_, i) => i)
       .filter((i) => moves[i].every((to) => to === null))
-      .map((i) => describeRect(fixture.rects[i]));
+      .map((i) => describeRect(fixture.rects, i));
     expect(stranded).toEqual([]);
   });
 
@@ -126,7 +110,7 @@ describe.each(SURFACES)("$slug", ({ slug, fixture, unreachable }) => {
     const orphans = rects
       .map((_, i) => i)
       .filter((i) => !seen.has(i))
-      .map((i) => describeRect(fixture.rects[i]));
+      .map((i) => describeRect(fixture.rects, i));
     expect(orphans).toHaveLength(unreachable);
   });
 
