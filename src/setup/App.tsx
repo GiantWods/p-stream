@@ -20,6 +20,7 @@ import { NotificationModal } from "@/components/overlays/notificationsModal";
 import { SupportInfoModal } from "@/components/overlays/SupportInfoModal";
 import { TipJarModal } from "@/components/overlays/tipJarModal";
 import { SimklAuthHandler } from "@/components/auth/SimklAuthHandler";
+import { NoticeStackHost } from "@/components/NoticeStack";
 import { UpdateNotice } from "@/components/UpdateNotice";
 import { TraktAuthHandler } from "@/components/auth/TraktAuthHandler";
 import { useGlobalKeyboardEvents } from "@/hooks/useGlobalKeyboardEvents";
@@ -189,6 +190,7 @@ function App() {
       <TraktAuthHandler />
       <SimklAuthHandler />
       <LanguageProvider />
+      <NoticeStackHost />
       <UpdateNotice />
       <NotificationModal id="notifications" />
       <TipJarModal id="tip-jar" />

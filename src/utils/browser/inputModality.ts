@@ -9,6 +9,8 @@
  * selector works everywhere.
  */
 
+import { isEditableTarget } from "@/utils/browser/keyboardTarget";
+
 export type InputModality = "pointer" | "key";
 
 const ATTRIBUTE = "data-input-modality";
@@ -19,6 +21,18 @@ const ATTRIBUTE = "data-input-modality";
  * rings. `:focus-visible` ignores these too.
  */
 const MODIFIER_KEYS = ["Shift", "Control", "Alt", "Meta", "AltGraph"];
+
+/**
+ * The only keys that mean "navigating" while a text field has focus.
+ *
+ * Typing is not navigating. Someone who clicked into the search bar, the watch
+ * party code or the subtitle delay is still driving with a pointer, and every
+ * character they enter would otherwise ring the field they are typing in. The
+ * arrows are excluded on purpose: in a field they move the caret or drive the
+ * value. Nothing here needs to assert "pointer" either — a keyboard user who
+ * types keeps the modality they arrived with.
+ */
+const FIELD_NAV_KEYS = ["Tab", "Escape"];
 
 let current: InputModality | null = null;
 
@@ -41,6 +55,11 @@ function handleKeyDown(event: KeyboardEvent) {
   // Browser and OS shortcuts aren't the user navigating the page
   if (event.metaKey || event.ctrlKey || event.altKey) return;
   if (MODIFIER_KEYS.indexOf(event.key) !== -1) return;
+  if (
+    isEditableTarget(event.target) &&
+    FIELD_NAV_KEYS.indexOf(event.key) === -1
+  )
+    return;
   set("key");
 }
 

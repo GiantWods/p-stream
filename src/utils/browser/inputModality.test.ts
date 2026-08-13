@@ -16,6 +16,10 @@ function press(init: KeyboardEventInit) {
   document.dispatchEvent(new KeyboardEvent("keydown", init));
 }
 
+function typeInto(el: HTMLElement, key: string) {
+  el.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+}
+
 beforeEach(() => {
   teardown = initInputModality();
 });
@@ -80,6 +84,68 @@ describe("initInputModality", () => {
     noteKeyModality();
     expect(modality()).toBe("key");
     expect(getInputModality()).toBe("key");
+  });
+
+  describe("while a text field has focus", () => {
+    let field: HTMLInputElement;
+
+    beforeEach(() => {
+      field = document.createElement("input");
+      document.body.append(field);
+      document.dispatchEvent(new Event("pointerdown"));
+    });
+
+    afterEach(() => {
+      field.remove();
+    });
+
+    it("does not treat typing as navigation", () => {
+      "hello".split("").forEach((key) => typeInto(field, key));
+      typeInto(field, "Backspace");
+      typeInto(field, "Enter");
+
+      expect(modality()).toBe("pointer");
+    });
+
+    // In a field an arrow moves the caret, or drives a number/range value.
+    it("leaves the arrows to the field", () => {
+      typeInto(field, "ArrowRight");
+      typeInto(field, "ArrowDown");
+
+      expect(modality()).toBe("pointer");
+    });
+
+    it("still switches on the keys that leave the field", () => {
+      typeInto(field, "Tab");
+      expect(modality()).toBe("key");
+
+      document.dispatchEvent(new Event("pointerdown"));
+      typeInto(field, "Escape");
+      expect(modality()).toBe("key");
+    });
+
+    // A TV or gamepad user reaches a field already in key modality, and typing
+    // must not silently strip the ring they navigate by.
+    it("does not undo keys the user already asserted", () => {
+      press({ key: "Tab" });
+      typeInto(field, "a");
+
+      expect(modality()).toBe("key");
+    });
+
+    it("counts a textarea and a contenteditable the same way", () => {
+      const area = document.createElement("textarea");
+      const rich = document.createElement("div");
+      rich.setAttribute("contenteditable", "");
+      document.body.append(area, rich);
+
+      typeInto(area, "a");
+      typeInto(rich, "a");
+      expect(modality()).toBe("pointer");
+
+      area.remove();
+      rich.remove();
+    });
   });
 
   it("stops tracking and clears up after teardown", () => {
