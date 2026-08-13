@@ -227,7 +227,11 @@
       rel="stylesheet"
     />
 
-    <script src="/config.js"></script>
+    <script>
+      document.write(
+        '<script src="/config.js?t=' + Date.now() + '"><\/script>',
+      );
+    </script>
 
     {{#if env.VITE_TRACK_SCRIPT }} {{{ env.VITE_TRACK_SCRIPT }}} {{/if}}
 
